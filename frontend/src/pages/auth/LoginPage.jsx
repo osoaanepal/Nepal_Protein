@@ -38,11 +38,11 @@ export const LoginPage = () => {
     <div className="min-h-[75vh] flex items-center justify-center px-4 py-16 bg-white">
       <SEO title="Sign In" noindex={true} />
       <div className="w-full max-w-md p-8 sm:p-10 rounded-3xl bg-slate-50 border border-slate-200 shadow-sm space-y-6">
-        
+
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center gap-1.5">
             <span className="font-display font-black text-3xl tracking-wider text-brand-navy">
-              OSOAA
+              Nepal Protein
             </span>
             <span className="w-2 h-2 rounded-full bg-orange-500 inline-block"></span>
           </div>

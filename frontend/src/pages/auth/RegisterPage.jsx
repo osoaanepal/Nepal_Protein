@@ -58,7 +58,7 @@ export const RegisterPage = () => {
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center gap-1.5">
             <span className="font-display font-black text-3xl tracking-wider text-brand-navy">
-              OSOAA
+              Nepal Protein
             </span>
             <span className="w-2 h-2 rounded-full bg-orange-500 inline-block"></span>
           </div>
