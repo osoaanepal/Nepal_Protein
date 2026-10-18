@@ -1,0 +1,35 @@
+# Nepal Protein - Production Robots.txt Fallback
+# Dynamic sitemap & robots are also served by Express API at /sitemap.xml and /robots.txt
+
+User-agent: *
+Allow: /
+Allow: /shop
+Allow: /brands/
+Allow: /brand/
+Allow: /product/
+Allow: /blog/
+Allow: /about
+Allow: /contact
+Allow: /faq
+Allow: /shipping-policy
+Allow: /return-policy
+Allow: /privacy-policy
+Allow: /terms-conditions
+
+# Disallow customer accounts, cart, checkout, admin portal, and authentication
+Disallow: /admin/
+Disallow: /account/
+Disallow: /cart
+Disallow: /checkout
+Disallow: /checkout/
+Disallow: /order-success
+Disallow: /order-tracking
+Disallow: /api/
+Disallow: /login
+Disallow: /register
+Disallow: /verify-otp
+Disallow: /forgot-password
+Disallow: /reset-password
+
+# Sitemap
+Sitemap: /sitemap.xml
