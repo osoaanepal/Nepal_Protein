@@ -9,15 +9,29 @@ class EmailService {
 
   init() {
     if (ENV.SMTP.USER && ENV.SMTP.PASS) {
-      this.transporter = nodemailer.createTransport({
-        host: ENV.SMTP.HOST,
-        port: ENV.SMTP.PORT,
-        secure: ENV.SMTP.PORT === 465,
-        auth: {
-          user: ENV.SMTP.USER,
-          pass: ENV.SMTP.PASS,
-        },
-      });
+      const isGmail = ENV.SMTP.HOST.includes('gmail');
+      const isSecurePort = ENV.SMTP.PORT === 465;
+
+      this.transporter = nodemailer.createTransport(
+        isGmail && !isSecurePort
+          ? {
+              // Direct Gmail service mode uses SSL securely without port 587 timeout
+              service: 'gmail',
+              auth: {
+                user: ENV.SMTP.USER,
+                pass: ENV.SMTP.PASS,
+              },
+            }
+          : {
+              host: ENV.SMTP.HOST,
+              port: ENV.SMTP.PORT,
+              secure: isSecurePort,
+              auth: {
+                user: ENV.SMTP.USER,
+                pass: ENV.SMTP.PASS,
+              },
+            }
+      );
     }
   }
 

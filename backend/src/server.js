@@ -34,8 +34,12 @@ import seoRoutes from './routes/seo.routes.js';
 
 const app = express();
 
+// Trust reverse proxy (Render, Cloudflare, etc.) so express-rate-limit can accurately detect client IP
+app.set('trust proxy', 1);
+
 // Security Middlewares
 app.use(helmet({
+
   crossOriginResourcePolicy: { policy: 'cross-origin' },
 }));
 
