@@ -19,9 +19,12 @@ export const ENV = {
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
   COOKIE_EXPIRES_IN_DAYS: parseInt(process.env.COOKIE_EXPIRES_IN_DAYS || '7', 10),
   
+  RESEND_API_KEY: process.env.RESEND_API_KEY || '',
+  RESEND_FROM: process.env.RESEND_FROM || 'Nepal Protein <onboarding@resend.dev>',
+
   SMTP: {
     HOST: process.env.SMTP_HOST || 'smtp.gmail.com',
-    PORT: parseInt(process.env.SMTP_PORT || '587', 10),
+    PORT: parseInt(process.env.SMTP_PORT || '465', 10),
     USER: process.env.SMTP_USER || '',
     PASS: process.env.SMTP_PASS || '',
     FROM: process.env.EMAIL_FROM || '"Nepal Protein" <osoaanepal@gmail.com>',

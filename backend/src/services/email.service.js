@@ -1,13 +1,22 @@
 import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import { ENV } from '../config/env.js';
 
 class EmailService {
   constructor() {
+    this.resend = null;
     this.transporter = null;
     this.init();
   }
 
   init() {
+    // 1. Prioritize Resend (HTTPS API - works 100% reliably on Render Free tier without SMTP timeout)
+    if (ENV.RESEND_API_KEY) {
+      this.resend = new Resend(ENV.RESEND_API_KEY);
+      console.log('[Email Service] Resend client initialized successfully.');
+    }
+
+    // 2. SMTP Transporter fallback
     if (ENV.SMTP.USER && ENV.SMTP.PASS) {
       const isGmail = ENV.SMTP.HOST.includes('gmail');
       const port = Number(ENV.SMTP.PORT) || 465;
@@ -48,6 +57,29 @@ class EmailService {
    * Internal sender method with dev fallback
    */
   async sendMail({ to, subject, html, text }) {
+    // Priority A: Resend API over HTTPS (never blocked by Render)
+    if (this.resend) {
+      try {
+        const { data, error } = await this.resend.emails.send({
+          from: ENV.RESEND_FROM || 'Nepal Protein <onboarding@resend.dev>',
+          to: [to],
+          subject,
+          html,
+          text,
+        });
+
+        if (error) {
+          console.error(`[Resend Error] Failed to send email to ${to}:`, error.message);
+        } else {
+          console.log(`[Email Service (Resend)] Successfully dispatched email to ${to} (Id: ${data?.id})`);
+          return { success: true, messageId: data?.id };
+        }
+      } catch (err) {
+        console.error(`[Resend Exception] Error sending to ${to}:`, err.message);
+      }
+    }
+
+    // Priority B: SMTP fallback
     if (this.transporter) {
       try {
         const info = await this.transporter.sendMail({
@@ -57,7 +89,7 @@ class EmailService {
           html,
           text,
         });
-        console.log(`[Email Service] Successfully sent email to ${to} (MessageId: ${info.messageId})`);
+        console.log(`[Email Service (SMTP)] Successfully sent email to ${to} (MessageId: ${info.messageId})`);
         return { success: true, messageId: info.messageId };
       } catch (err) {
         console.error(`[Email Service Error] Failed to send email to ${to}:`, err.message);
