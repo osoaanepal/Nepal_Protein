@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2, Upload, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Upload, AlertCircle, CheckCircle2, Image as ImageIcon, RefreshCw, X } from 'lucide-react';
 import api from '../../services/api';
 
 export const AdminProductFormPage = () => {
@@ -39,8 +39,11 @@ export const AdminProductFormPage = () => {
 
   const [variants, setVariants] = useState([]);
   const [nutrition, setNutrition] = useState([]);
-  const [imageFiles, setImageFiles] = useState([]);
+  const [newImages, setNewImages] = useState([]);
   const [existingImages, setExistingImages] = useState([]);
+  const [imageError, setImageError] = useState('');
+  const [brokenExistingImages, setBrokenExistingImages] = useState({});
+  const activeUrlsRef = useRef(new Set());
 
   useEffect(() => {
     const fetchMetadata = async () => {
@@ -120,14 +123,147 @@ export const AdminProductFormPage = () => {
     setNutrition(updated);
   };
 
-  const handleImageChange = (e) => {
-    if (e.target.files) {
-      setImageFiles([...imageFiles, ...Array.from(e.target.files)]);
+  const createPreviewUrl = (file) => {
+    const url = URL.createObjectURL(file);
+    activeUrlsRef.current.add(url);
+    return url;
+  };
+
+  const revokePreviewUrl = (url) => {
+    if (url && activeUrlsRef.current.has(url)) {
+      URL.revokeObjectURL(url);
+      activeUrlsRef.current.delete(url);
     }
   };
 
+  // Cleanup all temporary object URLs on unmount to prevent memory leaks
+  useEffect(() => {
+    const urls = activeUrlsRef.current;
+    return () => {
+      urls.forEach((url) => URL.revokeObjectURL(url));
+      urls.clear();
+    };
+  }, []);
+
+  const validateAndProcessFiles = (files) => {
+    setImageError('');
+    const validFiles = [];
+    const errors = [];
+    const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+
+    Array.from(files).forEach((file) => {
+      if (!file.type || !file.type.startsWith('image/')) {
+        errors.push(`"${file.name}" is not a valid image file. Only image formats (JPG, PNG, WEBP) are supported.`);
+        return;
+      }
+      if (file.size > MAX_SIZE) {
+        errors.push(`"${file.name}" exceeds the 5MB size limit (${(file.size / (1024 * 1024)).toFixed(1)}MB).`);
+        return;
+      }
+      validFiles.push(file);
+    });
+
+    if (errors.length > 0) {
+      setImageError(errors.join(' '));
+    }
+
+    return validFiles;
+  };
+
+  const handleImageChange = (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const validFiles = validateAndProcessFiles(files);
+    if (validFiles.length > 0) {
+      const newItems = validFiles.map((file) => ({
+        id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        file,
+        url: createPreviewUrl(file),
+        name: file.name,
+        size: file.size,
+        hasError: false,
+      }));
+      setNewImages((prev) => [...prev, ...newItems]);
+    }
+
+    e.target.value = '';
+  };
+
+  const handleRemoveNewImage = (index) => {
+    setNewImages((prev) => {
+      const itemToRemove = prev[index];
+      if (itemToRemove?.url) {
+        revokePreviewUrl(itemToRemove.url);
+      }
+      return prev.filter((_, idx) => idx !== index);
+    });
+  };
+
+  const handleReplaceNewImage = (index, e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    const validFiles = validateAndProcessFiles([file]);
+    if (validFiles.length > 0) {
+      setNewImages((prev) => {
+        const oldItem = prev[index];
+        if (oldItem?.url) {
+          revokePreviewUrl(oldItem.url);
+        }
+        const newUrl = createPreviewUrl(file);
+        return prev.map((item, idx) =>
+          idx === index
+            ? {
+                ...item,
+                file,
+                url: newUrl,
+                name: file.name,
+                size: file.size,
+                hasError: false,
+              }
+            : item
+        );
+      });
+    }
+    e.target.value = '';
+  };
+
   const handleRemoveExistingImage = (index) => {
-    setExistingImages(existingImages.filter((_, idx) => idx !== index));
+    setExistingImages((prev) => prev.filter((_, idx) => idx !== index));
+  };
+
+  const handleReplaceExistingImage = (index, e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    const validFiles = validateAndProcessFiles([file]);
+    if (validFiles.length > 0) {
+      setExistingImages((prev) => prev.filter((_, idx) => idx !== index));
+      const newUrl = createPreviewUrl(file);
+      setNewImages((prev) => [
+        ...prev,
+        {
+          id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+          file,
+          url: newUrl,
+          name: file.name,
+          size: file.size,
+          hasError: false,
+        },
+      ]);
+    }
+    e.target.value = '';
+  };
+
+  const handleNewPreviewError = (index) => {
+    setNewImages((prev) =>
+      prev.map((item, idx) => (idx === index ? { ...item, hasError: true } : item))
+    );
+  };
+
+  const handleExistingPreviewError = (idx) => {
+    setBrokenExistingImages((prev) => ({ ...prev, [idx]: true }));
   };
 
   const handleSubmit = async (e) => {
@@ -153,7 +289,7 @@ export const AdminProductFormPage = () => {
       formData.append('nutritionInformation', JSON.stringify(nutrition));
       formData.append('existingImages', JSON.stringify(existingImages));
 
-      imageFiles.forEach((file) => {
+      newImages.forEach(({ file }) => {
         formData.append('images', file);
       });
 
@@ -355,34 +491,207 @@ export const AdminProductFormPage = () => {
 
         {/* Product Images (Cloudinary) */}
         <div className="p-4 sm:p-6 bg-slate-900 border border-slate-800 rounded-3xl space-y-4">
-          <h2 className="text-xs font-bold text-orange-400 uppercase tracking-wider">3. Images (Cloudinary)</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs font-bold text-orange-400 uppercase tracking-wider">3. Images (Cloudinary)</h2>
+            {(existingImages.length > 0 || newImages.length > 0) && (
+              <span className="text-[11px] font-medium text-slate-400">
+                {existingImages.length + newImages.length} image{existingImages.length + newImages.length !== 1 ? 's' : ''} total
+              </span>
+            )}
+          </div>
 
-          {existingImages.length > 0 && (
-            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
-              {existingImages.map((img, idx) => (
-                <div key={idx} className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-slate-950 border border-slate-800 shrink-0">
-                  <img src={img.url} alt="" className="w-full h-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveExistingImage(idx)}
-                    className="absolute top-1 right-1 p-1 bg-rose-500 text-white rounded-full hover:bg-rose-600 transition"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
+          {imageError && (
+            <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-2xl text-xs text-rose-300 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                <span>{imageError}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setImageError('')}
+                className="text-rose-400 hover:text-white p-1 rounded-lg transition"
+                title="Dismiss error"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
             </div>
           )}
 
+          {/* Sensible placeholder when no images are present */}
+          {existingImages.length === 0 && newImages.length === 0 && (
+            <div className="flex flex-col items-center justify-center p-8 rounded-2xl bg-slate-950/40 border border-dashed border-slate-800 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500 mb-2.5">
+                <ImageIcon className="w-6 h-6 text-slate-400" />
+              </div>
+              <p className="text-xs font-bold text-slate-200">No product image selected</p>
+              <p className="text-[11px] text-slate-400 mt-0.5 max-w-xs">
+                Select one or more images from your device. The first image will be set as the main cover photo.
+              </p>
+            </div>
+          )}
+
+          {/* Image Previews Gallery */}
+          {(existingImages.length > 0 || newImages.length > 0) && (
+            <div className="flex flex-wrap gap-3">
+              {/* Existing Images from Cloudinary */}
+              {existingImages.map((img, idx) => {
+                const isPrimary = idx === 0;
+                const isBroken = Boolean(brokenExistingImages[idx]);
+
+                return (
+                  <div
+                    key={`existing-${idx}`}
+                    className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 shrink-0 group hover:border-slate-700 transition"
+                  >
+                    {isBroken ? (
+                      <div className="w-full h-full flex flex-col items-center justify-center p-2 text-center text-rose-400">
+                        <AlertCircle className="w-5 h-5 mb-1" />
+                        <span className="text-[10px] font-semibold">Preview Failed</span>
+                      </div>
+                    ) : (
+                      <img
+                        src={img.url}
+                        alt={`Product existing ${idx + 1}`}
+                        onError={() => handleExistingPreviewError(idx)}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+
+                    {/* Top Left: Primary badge */}
+                    {isPrimary && (
+                      <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-orange-500 text-white shadow">
+                        Primary
+                      </span>
+                    )}
+
+                    {/* Bottom Left: Cloud status badge */}
+                    <span className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-slate-900/90 text-slate-300 border border-slate-700/60 backdrop-blur-sm">
+                      Saved
+                    </span>
+
+                    {/* Top Right: Actions (Replace & Delete) */}
+                    <div className="absolute top-1.5 right-1.5 flex items-center gap-1">
+                      <label
+                        className="p-1.5 bg-slate-900/90 hover:bg-orange-500 text-slate-300 hover:text-white rounded-lg transition cursor-pointer shadow-lg backdrop-blur-sm"
+                        title="Replace this image"
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleReplaceExistingImage(idx, e)}
+                          className="hidden"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveExistingImage(idx)}
+                        className="p-1.5 bg-slate-900/90 hover:bg-rose-500 text-slate-300 hover:text-white rounded-lg transition shadow-lg backdrop-blur-sm"
+                        title="Remove image"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Newly Selected Local Images */}
+              {newImages.map((item, idx) => {
+                const isPrimary = existingImages.length === 0 && idx === 0;
+
+                return (
+                  <div
+                    key={item.id}
+                    className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 shrink-0 group hover:border-orange-500/50 transition ring-1 ring-orange-500/20"
+                  >
+                    {item.hasError ? (
+                      <div className="w-full h-full flex flex-col items-center justify-center p-2 text-center text-rose-400">
+                        <AlertCircle className="w-5 h-5 mb-1" />
+                        <span className="text-[10px] font-semibold">Preview Failed</span>
+                      </div>
+                    ) : (
+                      <img
+                        src={item.url}
+                        alt={item.name || `New preview ${idx + 1}`}
+                        onError={() => handleNewPreviewError(idx)}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+
+                    {/* Top Left: Primary badge */}
+                    {isPrimary ? (
+                      <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-orange-500 text-white shadow">
+                        Primary
+                      </span>
+                    ) : (
+                      <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-slate-900/90 text-slate-300 border border-slate-700/60 backdrop-blur-sm">
+                        #{existingImages.length + idx + 1}
+                      </span>
+                    )}
+
+                    {/* Bottom Left: New status badge */}
+                    <span className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-slate-900/90 text-orange-400 border border-orange-500/30 backdrop-blur-sm">
+                      New
+                    </span>
+
+                    {/* Bottom Right: File size */}
+                    {item.size && (
+                      <span className="absolute bottom-1.5 right-1.5 px-1 py-0.5 rounded text-[8px] font-mono font-medium bg-slate-900/80 text-slate-400 backdrop-blur-sm">
+                        {(item.size / 1024).toFixed(0)} KB
+                      </span>
+                    )}
+
+                    {/* Top Right: Actions (Replace & Delete) */}
+                    <div className="absolute top-1.5 right-1.5 flex items-center gap-1">
+                      <label
+                        className="p-1.5 bg-slate-900/90 hover:bg-orange-500 text-slate-300 hover:text-white rounded-lg transition cursor-pointer shadow-lg backdrop-blur-sm"
+                        title="Replace this image"
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleReplaceNewImage(idx, e)}
+                          className="hidden"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveNewImage(idx)}
+                        className="p-1.5 bg-slate-900/90 hover:bg-rose-500 text-slate-300 hover:text-white rounded-lg transition shadow-lg backdrop-blur-sm"
+                        title="Remove image"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Upload Dropzone */}
           <div>
-            <label className="block p-5 sm:p-6 border-2 border-dashed border-slate-700 hover:border-orange-500 rounded-2xl text-center cursor-pointer transition">
+            <label className="block p-5 sm:p-6 border-2 border-dashed border-slate-700 hover:border-orange-500 rounded-2xl text-center cursor-pointer transition bg-slate-950/30">
               <Upload className="w-6 h-6 text-orange-400 mx-auto mb-2" />
-              <span className="text-xs font-bold text-white">Click to upload images</span>
-              <p className="text-[10px] text-slate-400 mt-1">JPG, PNG, WEBP up to 5MB each</p>
-              <input type="file" multiple accept="image/*" onChange={handleImageChange} className="hidden" />
+              <span className="text-xs font-bold text-white">
+                {existingImages.length + newImages.length > 0 ? 'Click to select additional images' : 'Click to select product images'}
+              </span>
+              <p className="text-[10px] text-slate-400 mt-1">JPG, PNG, WEBP up to 5MB each (multiple files supported)</p>
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleImageChange}
+                className="hidden"
+              />
             </label>
-            {imageFiles.length > 0 && (
-              <p className="text-xs text-orange-400 mt-2">{imageFiles.length} new image(s) selected for upload</p>
+            {newImages.length > 0 && (
+              <div className="flex items-center gap-2 text-xs text-orange-400 mt-2">
+                <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                <span>{newImages.length} new image{newImages.length !== 1 ? 's' : ''} staged for upload</span>
+              </div>
             )}
           </div>
         </div>
