@@ -70,12 +70,9 @@ export const seoService = {
       Brand.find({ isActive: true }).select('slug updatedAt').lean(),
     ]);
 
-    // 3. Fetch published products (strictly published, excluding drafts & archived)
+    // 3. Fetch only published products for the sitemap
     const products = await Product.find({
-      $and: [
-        { status: { $ne: 'draft' } },
-        { status: { $ne: 'archived' } },
-      ],
+      status: 'published',
     })
       .select('slug updatedAt')
       .lean();
