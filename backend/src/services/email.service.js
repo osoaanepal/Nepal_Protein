@@ -10,28 +10,37 @@ class EmailService {
   init() {
     if (ENV.SMTP.USER && ENV.SMTP.PASS) {
       const isGmail = ENV.SMTP.HOST.includes('gmail');
-      const isSecurePort = ENV.SMTP.PORT === 465;
+      const port = Number(ENV.SMTP.PORT) || 465;
+      const isSecure = port === 465;
 
-      this.transporter = nodemailer.createTransport(
-        isGmail && !isSecurePort
-          ? {
-              // Direct Gmail service mode uses SSL securely without port 587 timeout
-              service: 'gmail',
-              auth: {
-                user: ENV.SMTP.USER,
-                pass: ENV.SMTP.PASS,
-              },
-            }
-          : {
-              host: ENV.SMTP.HOST,
-              port: ENV.SMTP.PORT,
-              secure: isSecurePort,
-              auth: {
-                user: ENV.SMTP.USER,
-                pass: ENV.SMTP.PASS,
-              },
-            }
-      );
+      const transportOptions = isGmail && !isSecure
+        ? {
+            service: 'gmail',
+            auth: {
+              user: ENV.SMTP.USER,
+              pass: ENV.SMTP.PASS,
+            },
+            connectionTimeout: 7000,
+            greetingTimeout: 7000,
+            socketTimeout: 10000,
+          }
+        : {
+            host: ENV.SMTP.HOST,
+            port,
+            secure: isSecure,
+            auth: {
+              user: ENV.SMTP.USER,
+              pass: ENV.SMTP.PASS,
+            },
+            tls: {
+              rejectUnauthorized: false,
+            },
+            connectionTimeout: 7000,
+            greetingTimeout: 7000,
+            socketTimeout: 10000,
+          };
+
+      this.transporter = nodemailer.createTransport(transportOptions);
     }
   }
 
@@ -48,10 +57,11 @@ class EmailService {
           html,
           text,
         });
+        console.log(`[Email Service] Successfully sent email to ${to} (MessageId: ${info.messageId})`);
         return { success: true, messageId: info.messageId };
       } catch (err) {
         console.error(`[Email Service Error] Failed to send email to ${to}:`, err.message);
-        // Do not crash, allow flow to continue in dev
+        return { success: false, error: err.message };
       }
     }
 

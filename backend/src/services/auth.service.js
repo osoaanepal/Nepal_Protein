@@ -53,7 +53,10 @@ export const authService = {
         email: normalizedEmail,
         purpose: 'EMAIL_VERIFICATION',
       });
-      await emailService.sendVerificationOtp({ email: normalizedEmail, name: existingUser.name, otp: rawOtp });
+      // Send email asynchronously in background so response returns immediately
+      emailService.sendVerificationOtp({ email: normalizedEmail, name: existingUser.name, otp: rawOtp }).catch((e) => {
+        console.error('[Auth Service] Background verification email dispatch error:', e.message);
+      });
 
       return {
         message: 'Verification code sent to your email address.',
@@ -76,7 +79,10 @@ export const authService = {
       email: normalizedEmail,
       purpose: 'EMAIL_VERIFICATION',
     });
-    await emailService.sendVerificationOtp({ email: normalizedEmail, name: newUser.name, otp: rawOtp });
+    // Send email asynchronously in background so response returns immediately
+    emailService.sendVerificationOtp({ email: normalizedEmail, name: newUser.name, otp: rawOtp }).catch((e) => {
+      console.error('[Auth Service] Background verification email dispatch error:', e.message);
+    });
 
     return {
       message: 'Account created. Please enter the 6-digit verification code sent to your email.',
@@ -157,9 +163,13 @@ export const authService = {
     });
 
     if (purpose === 'EMAIL_VERIFICATION') {
-      await emailService.sendVerificationOtp({ email: normalizedEmail, name: user.name, otp: rawOtp });
+      emailService.sendVerificationOtp({ email: normalizedEmail, name: user.name, otp: rawOtp }).catch((e) => {
+        console.error('[Auth Service] Background resend verification email error:', e.message);
+      });
     } else {
-      await emailService.sendPasswordResetOtp({ email: normalizedEmail, name: user.name, otp: rawOtp });
+      emailService.sendPasswordResetOtp({ email: normalizedEmail, name: user.name, otp: rawOtp }).catch((e) => {
+        console.error('[Auth Service] Background resend reset email error:', e.message);
+      });
     }
 
     return {
@@ -201,7 +211,9 @@ export const authService = {
           email: normalizedEmail,
           purpose: 'EMAIL_VERIFICATION',
         });
-        await emailService.sendVerificationOtp({ email: normalizedEmail, name: user.name, otp: rawOtp });
+        emailService.sendVerificationOtp({ email: normalizedEmail, name: user.name, otp: rawOtp }).catch((e) => {
+          console.error('[Auth Service] Background login verification email error:', e.message);
+        });
       } catch (e) {
         // Cooldown might be active
       }
@@ -249,7 +261,9 @@ export const authService = {
       email: normalizedEmail,
       purpose: 'PASSWORD_RESET',
     });
-    await emailService.sendPasswordResetOtp({ email: normalizedEmail, name: user.name, otp: rawOtp });
+    emailService.sendPasswordResetOtp({ email: normalizedEmail, name: user.name, otp: rawOtp }).catch((e) => {
+      console.error('[Auth Service] Background forgot-password email error:', e.message);
+    });
 
     return {
       message: 'If an account exists with this email, a password reset code has been sent.',
