@@ -1,5 +1,7 @@
 import React from 'react';
-import { ShieldCheck, CheckCircle2, Award, FlaskConical, Check } from 'lucide-react';
+import {
+  ShieldCheck, CheckCircle2, Award, FlaskConical, Check
+} from 'lucide-react';
 import { useSettingsStore } from '../../store/settingsStore';
 
 export const DftqcTrustSection = () => {
@@ -22,13 +24,13 @@ export const DftqcTrustSection = () => {
 
   return (
     <section className="py-16 bg-[#E5E7EB] text-black relative overflow-hidden">
-      
+
       {/* Background Subtle Accent */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          
+
           {/* Left Text & Quality Standards Description */}
           <div className="lg:col-span-7 space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-gray-300 text-orange-600 text-xs font-bold uppercase tracking-wider shadow-sm">
@@ -78,7 +80,7 @@ export const DftqcTrustSection = () => {
           {/* Right Trust Verification Visual Card */}
           <div className="lg:col-span-5">
             <div className="relative p-8 rounded-3xl bg-white text-slate-900 border border-slate-200 shadow-2xl space-y-6">
-              
+
               <div className="flex items-center justify-between border-b border-slate-100 pb-5">
                 <div className="flex items-center gap-3">
                   <div className="p-3 bg-black text-white rounded-2xl shadow-md">
@@ -127,6 +129,8 @@ export const DftqcTrustSection = () => {
 
         </div>
       </div>
+
+
     </section>
   );
 };

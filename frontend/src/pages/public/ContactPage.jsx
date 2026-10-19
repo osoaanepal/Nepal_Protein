@@ -144,7 +144,7 @@ export const ContactPage = () => {
     <div className="bg-white min-h-[80vh]">
       <SEO
         title="Contact Us | Supplement Inquiries & Support Nepal"
-        description="Contact OSOAA Nepal. Get in touch with our team for authentic fitness supplements inquiries, nationwide courier tracking, and support in Nepal."
+        description="Contact Nepal Protein. Get in touch with our team for authentic fitness supplements inquiries, nationwide courier tracking, and support in Nepal."
         canonical="/contact"
         breadcrumbs={breadcrumbs}
         jsonLd={buildStoreSchema()}
@@ -158,7 +158,7 @@ export const ContactPage = () => {
             <span>Dedicated Customer Support</span>
           </div>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-black tracking-tight">
-            Contact OSOAA Wellness
+            Contact Nepal Protein
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 max-w-2xl mx-auto leading-relaxed">
             Have questions regarding supplement authenticity, DFTQC quality compliance reports, product dosage recommendations, or order delivery across Nepal? Reach out to our nutrition specialists.

@@ -10,7 +10,10 @@ import {
   Lock,
   Facebook,
   Instagram,
-  Youtube
+  Youtube,
+  Building2,
+  Globe,
+  PackageCheck
 } from 'lucide-react';
 import { useSettingsStore } from '../../store/settingsStore';
 
@@ -169,6 +172,73 @@ export const Footer = () => {
             </div>
           </div>
         </div>
+
+        {/* Business Transparency & Product Sourcing */}
+        <div className="py-8 sm:py-10 border-t border-gray-300">
+          <div className="max-w-3xl mb-7">
+            <h3 className="text-sm sm:text-base font-black text-black uppercase tracking-wider">
+              Business Transparency &amp; Product Sourcing
+            </h3>
+
+            <p className="mt-2 text-xs sm:text-sm text-gray-700 leading-relaxed max-w-2xl">
+              Learn how our business, online brand, and distribution network work
+              together to bring products to customers across Nepal.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+            {/* Registered Business */}
+            <div className="min-w-0 flex items-start gap-3 p-4 rounded-xl bg-white border border-gray-300 shadow-sm hover:border-orange-400 transition-colors">
+              <div className="shrink-0 flex items-center justify-center w-10 h-10 rounded-lg bg-orange-50 text-orange-600">
+                <Building2 className="w-5 h-5" />
+              </div>
+
+              <div className="min-w-0">
+                <h4 className="text-sm font-bold text-black leading-snug">
+                  Arushi International
+                </h4>
+                <p className="mt-1 text-xs text-gray-700 leading-relaxed">
+                  Registered business · PAN/VAT
+                </p>
+              </div>
+            </div>
+
+            {/* Public-Facing Brand */}
+            <div className="min-w-0 flex items-start gap-3 p-4 rounded-xl bg-white border border-gray-300 shadow-sm hover:border-orange-400 transition-colors">
+              <div className="shrink-0 flex items-center justify-center w-10 h-10 rounded-lg bg-orange-50 text-orange-600">
+                <Globe className="w-5 h-5" />
+              </div>
+
+              <div className="min-w-0">
+                <h4 className="text-sm font-bold text-black leading-snug">
+                  Nepal Protein
+                </h4>
+                <p className="mt-1 text-xs text-gray-700 leading-relaxed">
+                  Public-facing brand and e-commerce website
+                </p>
+              </div>
+            </div>
+
+            {/* Distribution Network */}
+            <div className="min-w-0 flex items-start gap-3 p-4 rounded-xl bg-white border border-gray-300 shadow-sm hover:border-orange-400 transition-colors sm:col-span-2 lg:col-span-1">
+              <div className="shrink-0 flex items-center justify-center w-10 h-10 rounded-lg bg-orange-50 text-orange-600">
+                <PackageCheck className="w-5 h-5" />
+              </div>
+
+              <div className="min-w-0">
+                <h4 className="text-sm font-bold text-black leading-snug">
+                  Nepali distributors
+                </h4>
+                <p className="mt-1 text-xs text-gray-700 leading-relaxed">
+                  Source genuine products and retain purchase invoices
+                </p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
 
         {/* Bottom Disclaimer & Copyright */}
         <div className="pt-8 border-t border-gray-300 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-600">
