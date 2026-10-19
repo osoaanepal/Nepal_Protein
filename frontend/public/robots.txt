@@ -32,4 +32,4 @@ Disallow: /forgot-password
 Disallow: /reset-password
 
 # Sitemap
-Sitemap: /sitemap.xml
+Sitemap: https://nepalprotein.com/sitemap.xml
