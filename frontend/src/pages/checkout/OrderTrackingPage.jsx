@@ -32,14 +32,14 @@ export const OrderTrackingPage = () => {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-12 bg-white min-h-[75vh]">
       <SEO title="Track Your Order" noindex={true} />
-      
+
       <div className="text-center max-w-xl mx-auto space-y-3">
         <div className="w-12 h-12 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center mx-auto mb-2">
           <Truck className="w-6 h-6" />
         </div>
         <h1 className="text-3xl font-black text-brand-navy">Track Your Order</h1>
         <p className="text-xs sm:text-sm text-slate-500">
-          Enter your unique OSOAA Order Number and 10-digit mobile number to check real-time fulfillment and delivery status.
+          Enter your unique Nepal Protein Order Number and 10-digit mobile number to check real-time fulfillment and delivery status.
         </p>
       </div>
 
@@ -92,7 +92,7 @@ export const OrderTrackingPage = () => {
       {/* Order Status Result */}
       {order && (
         <div className="p-6 sm:p-8 rounded-3xl bg-slate-50 border border-slate-200 space-y-8 animate-in fade-in shadow-sm">
-          
+
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
             <div>
               <span className="text-[11px] text-slate-500 uppercase tracking-widest font-mono">Order Ref</span>
@@ -119,14 +119,12 @@ export const OrderTrackingPage = () => {
                   const isCurrent = currentStepIdx === idx;
                   return (
                     <div key={step} className="space-y-2">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center mx-auto text-xs font-bold transition ${
-                        isCompleted ? 'bg-orange-500 text-white font-black shadow-sm' : 'bg-slate-200 text-slate-500'
-                      }`}>
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center mx-auto text-xs font-bold transition ${isCompleted ? 'bg-orange-500 text-white font-black shadow-sm' : 'bg-slate-200 text-slate-500'
+                        }`}>
                         {idx + 1}
                       </div>
-                      <span className={`block text-[10px] sm:text-xs font-bold uppercase truncate ${
-                        isCurrent ? 'text-orange-600' : isCompleted ? 'text-slate-900' : 'text-slate-400'
-                      }`}>
+                      <span className={`block text-[10px] sm:text-xs font-bold uppercase truncate ${isCurrent ? 'text-orange-600' : isCompleted ? 'text-slate-900' : 'text-slate-400'
+                        }`}>
                         {step}
                       </span>
                     </div>

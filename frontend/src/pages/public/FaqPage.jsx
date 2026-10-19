@@ -7,26 +7,28 @@ export const FaqPage = () => {
   const [openIdx, setOpenIdx] = useState(0);
 
   const faqs = [
+
     {
-      q: 'How do I know OSOAA supplements are 100% authentic?',
-      a: 'All OSOAA products are batch-tracked, factory sealed, and tested under strict DFTQC quality standards for verified protein concentration, zero amino spiking, and absence of heavy metals.'
+      q: 'How do I know the supplements sold by Nepal Protein are authentic?',
+      a: 'Nepal Protein aims to provide genuine supplements from trusted brands and reliable suppliers. Products are supplied in their original packaging and should have intact factory seals, batch numbers, and expiry dates where applicable. Customers are encouraged to check product labels and packaging upon delivery and contact our support team if they notice any concerns.'
     },
     {
       q: 'What payment methods do you accept in Nepal?',
-      a: 'We accept secure instant payments via eSewa digital wallet (with automated server-side verification) as well as Cash on Delivery (COD) across all serviceable locations in Nepal.'
+      a: 'Nepal Protein accepts payments through eSewa and Cash on Delivery (COD) in serviceable locations across Nepal. Available payment options are displayed during checkout. Online payments are processed through the applicable payment provider.'
     },
     {
-      q: 'How long does delivery take inside Kathmandu and outside valley?',
-      a: 'Inside Kathmandu Valley (Kathmandu, Lalitpur, Bhaktapur): Delivery takes 1–2 business days. Outside Kathmandu across all 7 provinces: Delivery typically takes 2–4 business days via our courier partners.'
+      q: 'How long does delivery take inside Kathmandu and outside the valley?',
+      a: 'Delivery times depend on your location and courier availability. Orders within Kathmandu Valley typically take 1–2 business days, while deliveries to other locations in Nepal typically take 2–4 business days. Remote areas may require additional time.'
     },
     {
       q: 'How are delivery charges calculated?',
-      a: 'Delivery charges are calculated based on your selected district in Nepal and applied only once per order, regardless of product quantity.'
+      a: 'Delivery charges depend on your delivery district and the products in your order, where applicable. The applicable delivery fee is calculated at checkout and charged once per order rather than separately for each item, unless otherwise stated.'
     },
     {
       q: 'Can I track my order online?',
-      a: 'Yes! Simply click on "Track Order" on the top navigation bar and enter your Order Number (e.g. OSO-202609-XXXX) along with your 10-digit mobile number for real-time dispatch updates.'
+      a: 'Yes! Visit the Track Order page and enter your order number and registered mobile number to check your order status and available delivery updates.'
     }
+
   ];
 
   const faqSchema = buildFaqSchema(faqs);
