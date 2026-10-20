@@ -1,18 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Package, ChevronRight, AlertCircle, RefreshCw } from 'lucide-react';
 import api from '../../services/api';
 import { formatNpr } from '../../utils/currency';
+import { Pagination } from '../../components/common/Pagination';
 
 export const OrdersPage = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawPage = parseInt(searchParams.get('page') || '1', 10);
+  const page = !isNaN(rawPage) && rawPage > 0 ? rawPage : 1;
+
   const [orders, setOrders] = useState([]);
+  const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0, limit: 10 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchOrders = async () => {
+      setLoading(true);
       try {
-        const res = await api.get('/orders/my-orders');
+        const res = await api.get(`/orders/my-orders?page=${page}&limit=10`);
         setOrders(res.data.data || []);
+        setPagination(res.data.pagination || { page: 1, pages: 1, total: 0, limit: 10 });
       } catch (err) {
         console.error('Failed to load user orders:', err);
       } finally {
@@ -20,7 +28,18 @@ export const OrdersPage = () => {
       }
     };
     fetchOrders();
-  }, []);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [page]);
+
+  const handlePageChange = (newPage) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (newPage > 1) {
+      newParams.set('page', newPage.toString());
+    } else {
+      newParams.delete('page');
+    }
+    setSearchParams(newParams);
+  };
 
   if (loading) {
     return (
@@ -101,6 +120,16 @@ export const OrdersPage = () => {
 
         </div>
       ))}
+
+      {/* Pagination Controls */}
+      <Pagination
+        currentPage={pagination.page || page}
+        totalPages={pagination.pages || 1}
+        totalItems={pagination.total}
+        itemsPerPage={pagination.limit || 10}
+        onPageChange={handlePageChange}
+        activeColor="orange"
+      />
     </div>
   );
 };

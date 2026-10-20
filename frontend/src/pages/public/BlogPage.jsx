@@ -17,6 +17,7 @@ import { blogService } from '../../services/blogService';
 import { BlogCard } from '../../components/blog/BlogCard';
 import { FeaturedBlogSection } from '../../components/blog/FeaturedBlogSection';
 import { BLOG_CATEGORIES } from '../../utils/blogUtils';
+import { Pagination } from '../../components/common/Pagination';
 import { SEO } from '../../components/seo/SEO';
 
 export const BlogPage = () => {
@@ -119,7 +120,11 @@ export const BlogPage = () => {
   const handlePageChange = (newPage) => {
     if (newPage < 1 || newPage > pagination.pages) return;
     const params = new URLSearchParams(searchParams);
-    params.set('page', newPage.toString());
+    if (newPage > 1) {
+      params.set('page', newPage.toString());
+    } else {
+      params.delete('page');
+    }
     setSearchParams(params);
   };
 
@@ -318,40 +323,15 @@ export const BlogPage = () => {
           )}
 
           {/* Pagination Controls */}
-          {!loading && pagination.pages > 1 && (
-            <div className="pt-10 flex items-center justify-center gap-2">
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="p-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
-                aria-label="Previous Page"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-
-              {Array.from({ length: pagination.pages }, (_, i) => i + 1).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => handlePageChange(p)}
-                  className={`w-10 h-10 rounded-xl text-xs font-bold transition ${
-                    p === currentPage
-                      ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
-                      : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
-
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === pagination.pages}
-                className="p-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
-                aria-label="Next Page"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
+          {!loading && (
+            <Pagination
+              currentPage={pagination.page || currentPage || 1}
+              totalPages={pagination.pages || 1}
+              totalItems={pagination.total}
+              itemsPerPage={pagination.limit || 9}
+              onPageChange={handlePageChange}
+              activeColor="orange"
+            />
           )}
 
         </div>

@@ -1,16 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { Star, CheckCircle2, XCircle, Trash2, ShieldCheck } from 'lucide-react';
+import { Star, CheckCircle2, XCircle, Trash2, ShieldCheck, Filter } from 'lucide-react';
 import api from '../../services/api';
+import { AdminPagination } from '../../components/admin/AdminPagination';
 
 export const AdminReviewsPage = () => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
 
   const fetchReviews = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/reviews/admin/all');
+      const res = await api.get(`/reviews/admin/all?page=${page}&limit=15&status=${statusFilter}`);
       setReviews(res.data.data || []);
+      setPagination(res.data.pagination || { page: 1, pages: 1, total: 0 });
     } catch (err) {
       console.error('Failed to load reviews:', err);
     } finally {
@@ -20,12 +25,12 @@ export const AdminReviewsPage = () => {
 
   useEffect(() => {
     fetchReviews();
-  }, []);
+  }, [page, statusFilter]);
 
   const handleStatusUpdate = async (id, status) => {
     try {
       await api.put(`/reviews/admin/${id}/status`, { status });
-      setReviews(reviews.map((r) => r._id === id ? { ...r, status } : r));
+      setReviews(reviews.map((r) => (r._id === id ? { ...r, status } : r)));
     } catch (err) {
       alert(err.customMessage || 'Failed to update review status');
     }
@@ -35,7 +40,11 @@ export const AdminReviewsPage = () => {
     if (!window.confirm('Delete this customer review permanently?')) return;
     try {
       await api.delete(`/reviews/admin/${id}`);
-      setReviews(reviews.filter((r) => r._id !== id));
+      if (reviews.length === 1 && page > 1) {
+        setPage((p) => p - 1);
+      } else {
+        fetchReviews();
+      }
     } catch (err) {
       alert(err.customMessage || 'Failed to delete review');
     }
@@ -43,9 +52,29 @@ export const AdminReviewsPage = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-black text-white">Review Moderation</h1>
-        <p className="text-xs text-slate-400 mt-1">Approve, reject, or moderate customer ratings and verified buyer feedback</p>
+      {/* Header and Filter */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-black text-white">Review Moderation</h1>
+          <p className="text-xs text-slate-400 mt-1">Approve, reject, or moderate customer ratings and verified buyer feedback</p>
+        </div>
+
+        <div className="flex items-center gap-2 self-start sm:self-auto text-xs">
+          <span className="text-slate-400 font-medium">Filter Status:</span>
+          <select
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setPage(1);
+            }}
+            className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white font-semibold focus:outline-none focus:border-orange-500"
+          >
+            <option value="ALL">All Statuses</option>
+            <option value="APPROVED">Approved</option>
+            <option value="PENDING">Pending</option>
+            <option value="REJECTED">Rejected</option>
+          </select>
+        </div>
       </div>
 
       <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
@@ -64,7 +93,7 @@ export const AdminReviewsPage = () => {
               {loading ? (
                 <tr><td colSpan="5" className="p-8 text-center text-slate-400">Loading reviews...</td></tr>
               ) : reviews.length === 0 ? (
-                <tr><td colSpan="5" className="p-8 text-center text-slate-400">No customer reviews yet.</td></tr>
+                <tr><td colSpan="5" className="p-8 text-center text-slate-400">No customer reviews matching criteria.</td></tr>
               ) : (
                 reviews.map((rev) => (
                   <tr key={rev._id} className="hover:bg-slate-800/40 transition">
@@ -128,6 +157,16 @@ export const AdminReviewsPage = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Controls */}
+        <AdminPagination
+          currentPage={pagination.page || page}
+          totalPages={pagination.pages || 1}
+          totalItems={pagination.total}
+          itemsPerPage={15}
+          unitLabel="reviews"
+          onPageChange={(newPage) => setPage(newPage)}
+        />
       </div>
 
     </div>

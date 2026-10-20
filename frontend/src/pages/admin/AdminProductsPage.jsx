@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Search, Filter, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import api from '../../services/api';
 import { formatNpr } from '../../utils/currency';
+import { AdminPagination } from '../../components/admin/AdminPagination';
 
 export const AdminProductsPage = () => {
   const [products, setProducts] = useState([]);
@@ -35,7 +36,11 @@ export const AdminProductsPage = () => {
 
     try {
       await api.delete(`/products/${id}`);
-      setProducts(products.filter((p) => p._id !== id));
+      if (products.length === 1 && page > 1) {
+        setPage((p) => p - 1);
+      } else {
+        fetchProducts();
+      }
     } catch (err) {
       alert(err.customMessage || 'Failed to delete product');
     }
@@ -163,6 +168,16 @@ export const AdminProductsPage = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Controls */}
+        <AdminPagination
+          currentPage={pagination.page || page}
+          totalPages={pagination.pages || 1}
+          totalItems={pagination.total}
+          itemsPerPage={15}
+          unitLabel="products"
+          onPageChange={(newPage) => setPage(newPage)}
+        />
       </div>
 
     </div>

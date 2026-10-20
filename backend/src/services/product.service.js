@@ -3,6 +3,7 @@ import { Product } from '../models/Product.js';
 import { Category } from '../models/Category.js';
 import { Brand } from '../models/Brand.js';
 import { cloudinaryService } from '../services/cloudinary.service.js';
+import { getPaginationParams, buildPaginationMetadata } from '../utils/pagination.js';
 
 export const productService = {
   /**
@@ -84,9 +85,10 @@ export const productService = {
     else if (sortBy === 'popular') sortOptions = { soldCount: -1 };
     else if (sortBy === 'name-asc') sortOptions = { name: 1 };
 
-    const pageNum = parseInt(page, 10) || 1;
-    const limitNum = parseInt(limit, 10) || 12;
-    const skip = (pageNum - 1) * limitNum;
+    const { page: pageNum, limit: limitNum, skip } = getPaginationParams(queryParams, {
+      defaultLimit: 12,
+      maxLimit: 100,
+    });
 
     const [products, total] = await Promise.all([
       Product.find(query)
@@ -101,12 +103,7 @@ export const productService = {
 
     return {
       products,
-      pagination: {
-        total,
-        page: pageNum,
-        limit: limitNum,
-        pages: Math.ceil(total / limitNum),
-      },
+      pagination: buildPaginationMetadata(total, pageNum, limitNum),
     };
   },
 

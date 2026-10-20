@@ -1,6 +1,7 @@
 import slugify from 'slugify';
 import { BlogPost } from '../models/BlogPost.js';
 import { cloudinaryService } from './cloudinary.service.js';
+import { getPaginationParams, buildPaginationMetadata } from '../utils/pagination.js';
 
 // Helper to calculate reading time from text/content
 const calculateReadingTime = (text = '') => {
@@ -45,14 +46,13 @@ export const blogService = {
       tag,
       search,
       keyword,
-      page = 1,
-      limit = 9,
       sort = 'newest',
     } = queryParams;
 
-    const pageNum = Math.max(1, parseInt(page, 10) || 1);
-    const limitNum = Math.min(50, Math.max(1, parseInt(limit, 10) || 9));
-    const skip = (pageNum - 1) * limitNum;
+    const { page: pageNum, limit: limitNum, skip } = getPaginationParams(queryParams, {
+      defaultLimit: 9,
+      maxLimit: 50,
+    });
 
     // Base filter: Only published posts with publishedAt in the past/present
     const filter = {
@@ -105,12 +105,7 @@ export const blogService = {
 
     return {
       posts,
-      pagination: {
-        page: pageNum,
-        limit: limitNum,
-        total,
-        pages: Math.ceil(total / limitNum) || 1,
-      },
+      pagination: buildPaginationMetadata(total, pageNum, limitNum),
     };
   },
 
@@ -185,14 +180,13 @@ export const blogService = {
       isFeatured,
       keyword,
       search,
-      page = 1,
-      limit = 15,
       sort = 'newest',
     } = queryParams;
 
-    const pageNum = Math.max(1, parseInt(page, 10) || 1);
-    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 15));
-    const skip = (pageNum - 1) * limitNum;
+    const { page: pageNum, limit: limitNum, skip } = getPaginationParams(queryParams, {
+      defaultLimit: 15,
+      maxLimit: 100,
+    });
 
     const filter = {};
 
@@ -264,12 +258,7 @@ export const blogService = {
 
     return {
       posts,
-      pagination: {
-        page: pageNum,
-        limit: limitNum,
-        total,
-        pages: Math.ceil(total / limitNum) || 1,
-      },
+      pagination: buildPaginationMetadata(total, pageNum, limitNum),
       stats: stats[0] || {
         totalPosts: 0,
         publishedCount: 0,

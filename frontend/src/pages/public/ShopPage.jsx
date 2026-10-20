@@ -3,6 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { Filter, SlidersHorizontal, X, ChevronLeft, ChevronRight, Award, Check } from 'lucide-react';
 import api from '../../services/api';
 import { ProductCard } from '../../components/product/ProductCard';
+import { Pagination } from '../../components/common/Pagination';
 import { SEO } from '../../components/seo/SEO';
 
 export const ShopPage = () => {
@@ -79,7 +80,11 @@ export const ShopPage = () => {
 
   const handlePageChange = (newPage) => {
     const newParams = new URLSearchParams(searchParams);
-    newParams.set('page', newPage.toString());
+    if (newPage > 1) {
+      newParams.set('page', newPage.toString());
+    } else {
+      newParams.delete('page');
+    }
     setSearchParams(newParams);
   };
 
@@ -348,44 +353,14 @@ export const ShopPage = () => {
           )}
 
           {/* Pagination Controls */}
-          {pagination.pages > 1 && (
-            <div className="flex items-center justify-center gap-2 pt-6 border-t border-slate-100">
-              <button
-                onClick={() => handlePageChange(pagination.page - 1)}
-                disabled={pagination.page <= 1}
-                className="p-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed shadow-sm"
-                aria-label="Previous Page"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-
-              {[...Array(pagination.pages)].map((_, idx) => {
-                const pageNumber = idx + 1;
-                return (
-                  <button
-                    key={pageNumber}
-                    onClick={() => handlePageChange(pageNumber)}
-                    className={`w-9 h-9 rounded-xl text-xs font-bold transition shadow-sm ${
-                      pagination.page === pageNumber
-                        ? 'bg-black text-white'
-                        : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
-                    }`}
-                  >
-                    {pageNumber}
-                  </button>
-                );
-              })}
-
-              <button
-                onClick={() => handlePageChange(pagination.page + 1)}
-                disabled={pagination.page >= pagination.pages}
-                className="p-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed shadow-sm"
-                aria-label="Next Page"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
+          <Pagination
+            currentPage={pagination.page || pageParam || 1}
+            totalPages={pagination.pages || 1}
+            totalItems={pagination.total}
+            itemsPerPage={pagination.limit || 12}
+            onPageChange={handlePageChange}
+            activeColor="black"
+          />
         </main>
 
       </div>

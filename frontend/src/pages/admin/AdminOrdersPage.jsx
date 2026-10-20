@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Search, Filter, Eye, ChevronRight } from 'lucide-react';
 import api from '../../services/api';
 import { formatNpr } from '../../utils/currency';
+import { AdminPagination } from '../../components/admin/AdminPagination';
 
 export const AdminOrdersPage = () => {
   const [orders, setOrders] = useState([]);
@@ -133,6 +134,16 @@ export const AdminOrdersPage = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Controls */}
+        <AdminPagination
+          currentPage={pagination.page || page}
+          totalPages={pagination.pages || 1}
+          totalItems={pagination.total}
+          itemsPerPage={15}
+          unitLabel="orders"
+          onPageChange={(newPage) => setPage(newPage)}
+        />
       </div>
 
     </div>

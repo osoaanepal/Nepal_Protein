@@ -1,13 +1,15 @@
 import { Review } from '../models/Review.js';
 import { Product } from '../models/Product.js';
 import { Order } from '../models/Order.js';
+import { getPaginationParams, buildPaginationMetadata } from '../utils/pagination.js';
 
 export const getProductReviews = async (req, res, next) => {
   try {
     const { productId } = req.params;
-    const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 10;
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = getPaginationParams(req.query, {
+      defaultLimit: 10,
+      maxLimit: 50,
+    });
 
     const [reviews, total] = await Promise.all([
       Review.find({ product: productId, status: 'APPROVED' })
@@ -21,12 +23,7 @@ export const getProductReviews = async (req, res, next) => {
     res.status(200).json({
       success: true,
       data: reviews,
-      pagination: {
-        total,
-        page,
-        limit,
-        pages: Math.ceil(total / limit)
-      }
+      pagination: buildPaginationMetadata(total, page, limit),
     });
   } catch (error) {
     next(error);
@@ -91,9 +88,12 @@ export const createProductReview = async (req, res, next) => {
 
 export const getAllReviewsAdmin = async (req, res, next) => {
   try {
-    const { status, page = 1, limit = 20 } = req.query;
-    const filter = status ? { status } : {};
-    const skip = (page - 1) * limit;
+    const { status } = req.query;
+    const { page, limit, skip } = getPaginationParams(req.query, {
+      defaultLimit: 20,
+      maxLimit: 100,
+    });
+    const filter = (status && status !== 'ALL') ? { status } : {};
 
     const [reviews, total] = await Promise.all([
       Review.find(filter)
@@ -101,19 +101,14 @@ export const getAllReviewsAdmin = async (req, res, next) => {
         .populate('product', 'name images')
         .sort({ createdAt: -1 })
         .skip(skip)
-        .limit(Number(limit)),
+        .limit(limit),
       Review.countDocuments(filter),
     ]);
 
     res.status(200).json({
       success: true,
       data: reviews,
-      pagination: {
-        total,
-        page: Number(page),
-        limit: Number(limit),
-        pages: Math.ceil(total / limit),
-      },
+      pagination: buildPaginationMetadata(total, page, limit),
     });
   } catch (error) {
     next(error);

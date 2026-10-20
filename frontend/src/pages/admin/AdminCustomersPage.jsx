@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Search, UserCheck, UserX, ShieldCheck, Mail, Phone } from 'lucide-react';
 import api from '../../services/api';
 import { formatNpr } from '../../utils/currency';
+import { AdminPagination } from '../../components/admin/AdminPagination';
 
 export const AdminCustomersPage = () => {
   const [customers, setCustomers] = useState([]);
@@ -120,6 +121,16 @@ export const AdminCustomersPage = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Controls */}
+        <AdminPagination
+          currentPage={pagination.page || page}
+          totalPages={pagination.pages || 1}
+          totalItems={pagination.total}
+          itemsPerPage={15}
+          unitLabel="customers"
+          onPageChange={(newPage) => setPage(newPage)}
+        />
       </div>
 
     </div>

@@ -1,19 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { Award, ShieldCheck, ChevronRight, Filter, ChevronLeft, ExternalLink, Package, ArrowLeft } from 'lucide-react';
 import api from '../../services/api';
 import { ProductCard } from '../../components/product/ProductCard';
+import { Pagination } from '../../components/common/Pagination';
 import { SEO } from '../../components/seo/SEO';
 import { buildBrandSchema } from '../../utils/seoSchemas';
 
 export const BrandDetailPage = () => {
   const { slug } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const rawPage = parseInt(searchParams.get('page') || '1', 10);
+  const page = !isNaN(rawPage) && rawPage > 0 ? rawPage : 1;
+  const sortBy = searchParams.get('sortBy') || 'newest';
 
   const [brand, setBrand] = useState(null);
   const [products, setProducts] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
-  const [page, setPage] = useState(1);
-  const [sortBy, setSortBy] = useState('newest');
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -51,7 +55,29 @@ export const BrandDetailPage = () => {
     };
 
     fetchBrandProducts();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [brand, page, sortBy]);
+
+  const handlePageChange = (newPage) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (newPage > 1) {
+      newParams.set('page', newPage.toString());
+    } else {
+      newParams.delete('page');
+    }
+    setSearchParams(newParams);
+  };
+
+  const handleSortChange = (newSort) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (newSort && newSort !== 'newest') {
+      newParams.set('sortBy', newSort);
+    } else {
+      newParams.delete('sortBy');
+    }
+    newParams.delete('page'); // Reset to page 1 on sort change
+    setSearchParams(newParams);
+  };
 
   if (isLoading) {
     return (
@@ -196,7 +222,7 @@ export const BrandDetailPage = () => {
           <span className="text-slate-500 font-medium">Sort By:</span>
           <select
             value={sortBy}
-            onChange={(e) => { setSortBy(e.target.value); setPage(1); }}
+            onChange={(e) => handleSortChange(e.target.value)}
             className="bg-transparent text-slate-900 font-bold focus:outline-none cursor-pointer"
           >
             <option value="newest">Newest Arrivals</option>
@@ -234,44 +260,14 @@ export const BrandDetailPage = () => {
       )}
 
       {/* Pagination */}
-      {pagination.pages > 1 && (
-        <div className="flex items-center justify-center gap-2 pt-6 border-t border-slate-100">
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page <= 1}
-            className="p-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed shadow-sm"
-            aria-label="Previous Page"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-
-          {[...Array(pagination.pages)].map((_, idx) => {
-            const pageNum = idx + 1;
-            return (
-              <button
-                key={pageNum}
-                onClick={() => setPage(pageNum)}
-                className={`w-9 h-9 rounded-xl text-xs font-bold transition shadow-sm ${
-                  page === pageNum
-                    ? 'bg-black text-white'
-                    : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                {pageNum}
-              </button>
-            );
-          })}
-
-          <button
-            onClick={() => setPage((p) => Math.min(pagination.pages, p + 1))}
-            disabled={page >= pagination.pages}
-            className="p-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed shadow-sm"
-            aria-label="Next Page"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-      )}
+      <Pagination
+        currentPage={pagination.page || page}
+        totalPages={pagination.pages || 1}
+        totalItems={pagination.total}
+        itemsPerPage={12}
+        onPageChange={handlePageChange}
+        activeColor="black"
+      />
     </div>
   );
 };

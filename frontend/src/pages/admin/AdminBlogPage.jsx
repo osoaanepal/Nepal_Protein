@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { blogService } from '../../services/blogService';
 import { formatBlogDate, getCategoryMeta } from '../../utils/blogUtils';
+import { AdminPagination } from '../../components/admin/AdminPagination';
 
 export const AdminBlogPage = () => {
   const [posts, setPosts] = useState([]);
@@ -86,8 +87,11 @@ export const AdminBlogPage = () => {
     try {
       setActionLoading(id);
       await blogService.adminDeletePost(id);
-      setPosts((prev) => prev.filter((p) => p._id !== id));
-      setStats((prev) => ({ ...prev, totalPosts: Math.max(0, prev.totalPosts - 1) }));
+      if (posts.length === 1 && page > 1) {
+        setPage((p) => p - 1);
+      } else {
+        fetchAdminPosts();
+      }
     } catch (err) {
       alert(err.customMessage || 'Failed to delete post');
     } finally {
@@ -413,30 +417,14 @@ export const AdminBlogPage = () => {
         </div>
 
         {/* Pagination */}
-        {pagination.pages > 1 && (
-          <div className="p-4 bg-slate-950 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
-            <span>
-              Showing page {pagination.page} of {pagination.pages} ({pagination.total} posts)
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="p-1.5 rounded-lg border border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800 disabled:opacity-40"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <span className="font-bold text-white px-2">{page}</span>
-              <button
-                onClick={() => setPage((p) => Math.min(pagination.pages, p + 1))}
-                disabled={page === pagination.pages}
-                className="p-1.5 rounded-lg border border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800 disabled:opacity-40"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        )}
+        <AdminPagination
+          currentPage={pagination.page || page}
+          totalPages={pagination.pages || 1}
+          totalItems={pagination.total}
+          itemsPerPage={12}
+          unitLabel="posts"
+          onPageChange={(newPage) => setPage(newPage)}
+        />
       </div>
 
     </div>

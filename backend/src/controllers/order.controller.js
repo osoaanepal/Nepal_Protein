@@ -2,6 +2,7 @@ import { orderService } from '../services/order.service.js';
 import { paymentService } from '../services/payment.service.js';
 import { Order } from '../models/Order.js';
 import { emailService } from '../services/email.service.js';
+import { getPaginationParams, buildPaginationMetadata } from '../utils/pagination.js';
 
 export const createOrder = async (req, res, next) => {
   try {
@@ -43,9 +44,10 @@ export const createOrder = async (req, res, next) => {
 
 export const getMyOrders = async (req, res, next) => {
   try {
-    const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 10;
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = getPaginationParams(req.query, {
+      defaultLimit: 10,
+      maxLimit: 50,
+    });
 
     const [orders, total] = await Promise.all([
       Order.find({ customer: req.user._id })
@@ -59,12 +61,7 @@ export const getMyOrders = async (req, res, next) => {
     res.status(200).json({
       success: true,
       data: orders,
-      pagination: {
-        total,
-        page,
-        limit,
-        pages: Math.ceil(total / limit),
-      },
+      pagination: buildPaginationMetadata(total, page, limit),
     });
   } catch (error) {
     next(error);

@@ -2,6 +2,7 @@ import { Order } from '../models/Order.js';
 import { User } from '../models/User.js';
 import { Product } from '../models/Product.js';
 import { inventoryService } from '../services/inventory.service.js';
+import { getPaginationParams, buildPaginationMetadata } from '../utils/pagination.js';
 
 export const getDashboardAnalytics = async (req, res, next) => {
   try {
@@ -88,7 +89,11 @@ export const getDashboardAnalytics = async (req, res, next) => {
 
 export const getAdminOrders = async (req, res, next) => {
   try {
-    const { status, paymentStatus, page = 1, limit = 15, search } = req.query;
+    const { status, paymentStatus, search } = req.query;
+    const { page, limit, skip } = getPaginationParams(req.query, {
+      defaultLimit: 15,
+      maxLimit: 100,
+    });
     const query = {};
 
     if (status && status !== 'ALL') query.orderStatus = status;
@@ -102,26 +107,19 @@ export const getAdminOrders = async (req, res, next) => {
       ];
     }
 
-    const skip = (Number(page) - 1) * Number(limit);
-
     const [orders, total] = await Promise.all([
       Order.find(query)
         .populate('customer', 'name email phone')
         .sort({ createdAt: -1 })
         .skip(skip)
-        .limit(Number(limit)),
+        .limit(limit),
       Order.countDocuments(query),
     ]);
 
     res.status(200).json({
       success: true,
       data: orders,
-      pagination: {
-        total,
-        page: Number(page),
-        limit: Number(limit),
-        pages: Math.ceil(total / Number(limit)),
-      },
+      pagination: buildPaginationMetadata(total, page, limit),
     });
   } catch (error) {
     next(error);
@@ -179,7 +177,11 @@ export const updateOrderStatusAdmin = async (req, res, next) => {
 
 export const getAdminCustomers = async (req, res, next) => {
   try {
-    const { search, page = 1, limit = 15 } = req.query;
+    const { search } = req.query;
+    const { page, limit, skip } = getPaginationParams(req.query, {
+      defaultLimit: 15,
+      maxLimit: 100,
+    });
     const query = { role: 'customer' };
 
     if (search) {
@@ -190,10 +192,8 @@ export const getAdminCustomers = async (req, res, next) => {
       ];
     }
 
-    const skip = (Number(page) - 1) * Number(limit);
-
     const [customers, total] = await Promise.all([
-      User.find(query).sort({ createdAt: -1 }).skip(skip).limit(Number(limit)).lean(),
+      User.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
       User.countDocuments(query),
     ]);
 
@@ -222,12 +222,7 @@ export const getAdminCustomers = async (req, res, next) => {
     res.status(200).json({
       success: true,
       data: enrichedCustomers,
-      pagination: {
-        total,
-        page: Number(page),
-        limit: Number(limit),
-        pages: Math.ceil(total / Number(limit)),
-      },
+      pagination: buildPaginationMetadata(total, page, limit),
     });
   } catch (error) {
     next(error);

@@ -10,7 +10,9 @@
     "seed": "node src/utils/seeder.js",
     "create-admin": "node src/utils/createAdmin.js",
     "migrate-dftqc": "node src/utils/migrateDftqc.js",
-    "test:seo": "node src/utils/testSeoValidation.js"
+    "test:seo": "node src/utils/testSeoValidation.js",
+    "test:pagination": "node src/utils/testPagination.js",
+    "test": "node src/utils/testSeoValidation.js && node src/utils/testPagination.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
