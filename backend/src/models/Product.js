@@ -59,6 +59,10 @@ const productSchema = new mongoose.Schema({
     default: '',
     trim: true,
   },
+  attributes: {
+    type: mongoose.Schema.Types.Mixed,
+    default: undefined,
+  },
   description: {
     type: String,
     required: [true, 'Please provide detailed product description'],

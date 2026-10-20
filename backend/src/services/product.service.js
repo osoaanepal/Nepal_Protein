@@ -216,6 +216,7 @@ export const productService = {
     }
     if (updateData.subCategory !== undefined) product.subCategory = updateData.subCategory;
     if (updateData.shortDescription !== undefined) product.shortDescription = updateData.shortDescription;
+    if (updateData.attributes !== undefined) product.attributes = updateData.attributes;
     if (updateData.description !== undefined) product.description = updateData.description;
     if (updateData.price !== undefined) product.price = Number(updateData.price);
     if (updateData.compareAtPrice !== undefined) product.compareAtPrice = Number(updateData.compareAtPrice);

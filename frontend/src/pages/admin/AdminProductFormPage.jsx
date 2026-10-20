@@ -416,12 +416,16 @@ export const AdminProductFormPage = () => {
 
             <div className="sm:col-span-2">
               <label className="text-xs font-bold text-white block mb-1">Short Description</label>
-              <input
-                type="text"
+              <textarea
+                rows={3}
                 value={form.shortDescription}
                 onChange={(e) => setForm({ ...form, shortDescription: e.target.value })}
-                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white focus:border-orange-500 focus:outline-none"
+                placeholder="Enter a concise product summary or key specifications (e.g. Brand: OSOAA, Form: Tablet, Diet Type: Vegetarian)..."
+                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white focus:border-orange-500 focus:outline-none resize-y leading-relaxed"
               />
+              <p className="text-[11px] text-slate-400 mt-1">
+                Supports short summary prose or key-value pairs (e.g. Brand: OSOAA, Net Quantity: 120 Count). Key-value pairs automatically format into a structured specifications card on the product page.
+              </p>
             </div>
 
             <div className="sm:col-span-2">

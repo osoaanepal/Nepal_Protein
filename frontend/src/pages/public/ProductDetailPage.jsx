@@ -19,8 +19,10 @@ import { useWishlistStore } from '../../store/wishlistStore';
 import { useAuthStore } from '../../store/authStore';
 import { ProductCard } from '../../components/product/ProductCard';
 import { ProductDescription } from '../../components/product/ProductDescription';
+import { ProductShortDescription } from '../../components/product/ProductShortDescription';
 import { SEO } from '../../components/seo/SEO';
 import { buildProductSchema } from '../../utils/seoSchemas';
+import { formatShortDescriptionForSeo } from '../../utils/shortDescriptionParser';
 
 export const ProductDetailPage = () => {
   const { slug } = useParams();
@@ -188,7 +190,7 @@ export const ProductDetailPage = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-16 bg-white">
       <SEO
         title={`${product.name} | Buy Authentic in Nepal | Nepal Protein`}
-        description={product.shortDescription || `${product.name} available at Nepal Protein. Authentic sports nutrition with fast nationwide delivery in Nepal.`}
+        description={formatShortDescriptionForSeo(product.shortDescription, product.attributes) || `${product.name} available at Nepal Protein. Authentic sports nutrition with fast nationwide delivery in Nepal.`}
         canonical={`/product/${product.slug}`}
         ogImage={selectedImage}
         ogType="product"
@@ -311,10 +313,12 @@ export const ProductDetailPage = () => {
           </div>
 
           {/* Short Description */}
-          {product.shortDescription && (
-            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-              {product.shortDescription}
-            </p>
+          {(product.shortDescription || product.attributes) && (
+            <ProductShortDescription
+              shortDescription={product.shortDescription}
+              attributes={product.attributes}
+              product={product}
+            />
           )}
 
           {/* Variant Selector (Flavors / Sizes) */}

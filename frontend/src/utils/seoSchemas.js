@@ -1,4 +1,5 @@
 import { siteConfig, getCanonicalUrl } from '../config/siteConfig';
+import { formatShortDescriptionForSeo } from './shortDescriptionParser';
 
 /**
  * Build Schema.org Organization structured data
@@ -85,7 +86,7 @@ export const buildProductSchema = (product, selectedVariant = null) => {
     '@type': 'Product',
     name: product.name,
     image: images.length > 0 ? images : undefined,
-    description: product.shortDescription || product.description?.replace(/<[^>]+>/g, '').slice(0, 300) || '',
+    description: formatShortDescriptionForSeo(product.shortDescription, product.attributes) || product.description?.replace(/<[^>]+>/g, '').slice(0, 300) || '',
     sku: selectedVariant?.sku || product.sku || product._id,
     mpn: product.sku || product._id,
     brand: {
