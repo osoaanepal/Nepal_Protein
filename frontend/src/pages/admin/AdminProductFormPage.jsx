@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, Upload, AlertCircle, CheckCircle2, Image as ImageIcon, RefreshCw, X } from 'lucide-react';
 import api from '../../services/api';
+import { ProductDescriptionEditor } from '../../components/admin/ProductDescriptionEditor';
 
 export const AdminProductFormPage = () => {
   const { id } = useParams();
@@ -424,13 +425,14 @@ export const AdminProductFormPage = () => {
             </div>
 
             <div className="sm:col-span-2">
-              <label className="text-xs font-bold text-white block mb-1">Full Detailed Description *</label>
-              <textarea
+              <label className="text-xs font-bold text-white block mb-1.5">
+                Full Detailed Description *
+              </label>
+              <ProductDescriptionEditor
                 required
-                rows={4}
                 value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white focus:border-orange-500 focus:outline-none"
+                onChange={(val) => setForm({ ...form, description: val })}
+                placeholder="Enter detailed product description, key benefits (- **Feature:** Details), and usage directions..."
               />
             </div>
           </div>

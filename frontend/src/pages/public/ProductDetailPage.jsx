@@ -18,6 +18,7 @@ import { useCartStore } from '../../store/cartStore';
 import { useWishlistStore } from '../../store/wishlistStore';
 import { useAuthStore } from '../../store/authStore';
 import { ProductCard } from '../../components/product/ProductCard';
+import { ProductDescription } from '../../components/product/ProductDescription';
 import { SEO } from '../../components/seo/SEO';
 import { buildProductSchema } from '../../utils/seoSchemas';
 
@@ -448,8 +449,8 @@ export const ProductDetailPage = () => {
 
         {/* Tab 1: Description */}
         {activeTab === 'description' && (
-          <div className="max-w-none text-slate-700 text-sm leading-relaxed space-y-4">
-            <p>{product.description}</p>
+          <div className="max-w-none text-slate-700 text-sm leading-relaxed">
+            <ProductDescription description={product.description} />
           </div>
         )}
 
