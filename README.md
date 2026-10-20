@@ -1,4 +1,4 @@
-# OSOAA — Production-Ready Full-Stack E-Commerce Platform
+# Nepal Protein — Production-Ready Full-Stack E-Commerce Platform
 
 > **"A Journey of Wellness"** — Premium Wellness, Sports Nutrition & Gym Accessories E-Commerce Platform engineered specifically for the Nepalese market.
 
@@ -6,7 +6,7 @@
 
 ## 1. System Overview
 
-**OSOAA** is a decoupled full-stack MERN application developed for selling gym, fitness, wellness, and nutrition supplements in Nepal. 
+**Nepal Protein** is a decoupled full-stack MERN application developed for selling gym, fitness, wellness, and nutrition supplements in Nepal. 
 
 ### Key Capabilities
 * **Nepalese Market Localization:** Native Nepalese Rupees (`Rs.` / `NPR`) throughout calculations, Nepalese administrative boundaries (Provinces 1–7, Districts, Municipalities, Wards), and localized courier tracking.
