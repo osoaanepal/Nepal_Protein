@@ -150,32 +150,49 @@ export const HomePage = () => {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-end justify-between mb-8 pb-3 border-b border-slate-100">
           <div>
-            <span className="text-xs font-bold text-orange-600 uppercase tracking-widest">Browse by Category</span>
-            <h2 className="text-2xl sm:text-3xl font-black text-black mt-1">Shop By Goal & Category</h2>
+            <span className="text-xs font-bold text-orange-600 uppercase tracking-widest">
+              Browse by Category
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-black text-black mt-1">
+              Shop By Goal & Category
+            </h2>
           </div>
-          <Link to="/shop" className="text-xs font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1">
+
+          <Link
+            to="/shop"
+            className="text-xs font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1"
+          >
             <span>View All</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-5">
           {categories.map((cat) => (
             <Link
               key={cat._id}
               to={`/shop?category=${cat.slug}`}
-              className="group relative p-4 rounded-2xl bg-white border border-slate-200 hover:border-orange-300 hover:shadow-brand flex flex-col items-center text-center space-y-3 transition-all duration-300 hover:-translate-y-1"
+              className="group rounded-2xl bg-white border border-slate-200 hover:border-orange-400 hover:shadow-lg flex flex-col items-center text-center overflow-hidden transition-all duration-300 hover:-translate-y-1"
             >
-              <div className="w-16 h-16 rounded-xl bg-slate-50 border border-slate-100 overflow-hidden flex items-center justify-center p-2 group-hover:scale-105 transition-transform">
+              {/* Larger Category Image */}
+              <div className="w-full aspect-square bg-slate-50 overflow-hidden">
                 <img
-                  src={cat.image?.url || 'https://images.unsplash.com/photo-1579722821273-0f6c7d44362f?w=200&auto=format&fit=crop&q=80'}
+                  src={
+                    cat.image?.url ||
+                    'https://images.unsplash.com/photo-1579722821273-0f6c7d44362f?w=500&auto=format&fit=crop&q=80'
+                  }
                   alt={cat.name}
-                  className="w-full h-full object-cover rounded-lg"
+                  loading="lazy"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />
               </div>
-              <h3 className="text-xs font-bold text-slate-800 group-hover:text-orange-600 transition">
-                {cat.name}
-              </h3>
+
+              {/* Category Name */}
+              <div className="w-full min-h-[64px] px-2 py-4 flex items-center justify-center">
+                <h3 className="text-sm font-bold text-slate-800 group-hover:text-orange-600 transition-colors">
+                  {cat.name}
+                </h3>
+              </div>
             </Link>
           ))}
         </div>
