@@ -109,6 +109,24 @@ export const LoginPage = () => {
           </button>
         </form>
 
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-slate-500">
+          <Link
+            to="/privacy-policy"
+            className="hover:text-orange-600 transition-colors underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 rounded"
+          >
+            Privacy Policy
+          </Link>
+          <span className="text-slate-300 select-none" aria-hidden="true">
+            •
+          </span>
+          <Link
+            to="/terms-and-conditions"
+            className="hover:text-orange-600 transition-colors underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 rounded"
+          >
+            Terms & Conditions
+          </Link>
+        </div>
+
         <div className="text-center text-xs text-slate-500 pt-2 border-t border-slate-200">
           Don't have an account yet?{' '}
           <Link to="/register" className="text-orange-600 font-bold hover:underline">

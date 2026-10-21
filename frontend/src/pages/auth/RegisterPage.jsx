@@ -63,7 +63,7 @@ export const RegisterPage = () => {
             <span className="w-2 h-2 rounded-full bg-orange-500 inline-block"></span>
           </div>
           <h1 className="text-xl font-bold text-slate-900">Create Your Account</h1>
-          <p className="text-xs text-slate-500">Join OSOAA to get member discounts and fast tracking.</p>
+          <p className="text-xs text-slate-500">Join Nepal Protein to get member discounts and fast tracking.</p>
         </div>
 
         {errorMessage && (
@@ -165,6 +165,24 @@ export const RegisterPage = () => {
               </>
             )}
           </button>
+
+          <p className="text-center text-xs text-slate-500 leading-relaxed px-1">
+            By creating an account, you agree to our{' '}
+            <Link
+              to="/privacy-policy"
+              className="text-orange-600 hover:text-orange-700 font-semibold underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 rounded"
+            >
+              Privacy Policy
+            </Link>{' '}
+            and{' '}
+            <Link
+              to="/terms-and-conditions"
+              className="text-orange-600 hover:text-orange-700 font-semibold underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 rounded"
+            >
+              Terms & Conditions
+            </Link>
+            .
+          </p>
         </form>
 
         <div className="text-center text-xs text-slate-500 pt-2 border-t border-slate-200">

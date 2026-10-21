@@ -86,6 +86,7 @@ function App() {
         <Route path="return-policy" element={<PoliciesPage />} />
         <Route path="privacy-policy" element={<PoliciesPage />} />
         <Route path="terms-conditions" element={<PoliciesPage />} />
+        <Route path="terms-and-conditions" element={<PoliciesPage />} />
 
         {/* Auth */}
         <Route path="login" element={<LoginPage />} />

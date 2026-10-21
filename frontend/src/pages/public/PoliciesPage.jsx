@@ -324,268 +324,241 @@ export const PoliciesPage = () => {
   } else if (path.includes('privacy-policy')) {
     title = 'Privacy Policy';
     content = (
-
-      <div className="space-y-4 text-xs sm:text-sm text-slate-700 leading-relaxed">
+      <div className="space-y-5 text-xs sm:text-sm text-slate-700 leading-relaxed">
         <p>
-          Your privacy is important to Nepal Protein. This Privacy Policy
-          explains how we collect, use, store, and protect your personal
-          information when you visit our website or purchase products from
-          different brands through our store.
+          Your privacy is important to <strong>Nepal Protein</strong>. This Privacy Policy
+          explains how we collect, use, store, and protect your personal information when
+          you create an account, browse our store, or purchase supplements and nutrition products.
         </p>
 
-        <h3 className="text-base font-bold text-black mt-4">
-          1. Data Collection
+        <h3 className="text-base font-bold text-slate-900 mt-5">
+          1. Account &amp; Personal Data We Collect
         </h3>
         <p>
-          We may collect information necessary to process orders and provide
-          our services, including your name, delivery address, mobile phone
-          number, email address, order details, and account information.
-          We may also collect limited technical information about your
-          interaction with our website to improve its performance and security.
+          When you register an account or interact with Nepal Protein, we collect information
+          strictly necessary to provide our services:
         </p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li><strong>Full Name:</strong> To identify your account and address your orders.</li>
+          <li><strong>Email Address:</strong> For account authentication, password recovery, order receipts, and one-time password (OTP) verification.</li>
+          <li><strong>Nepalese Mobile Number:</strong> Required 10-digit mobile number (e.g., 98XXXXXXXX, 97XXXXXXXX, 96XXXXXXXX) for courier coordination, delivery updates, and verification.</li>
+          <li><strong>Account Password:</strong> Cryptographically hashed using industry-standard hashing algorithms (bcrypt). Passwords are never stored or accessible in plain text.</li>
+        </ul>
 
-        <h3 className="text-base font-bold text-black mt-4">
-          2. How We Use Your Information
+        <h3 className="text-base font-bold text-slate-900 mt-5">
+          2. Delivery &amp; Order Information
         </h3>
         <p>
-          Your information may be used to process orders, arrange deliveries,
-          verify transactions, provide order updates, respond to customer
-          inquiries, manage your account, prevent fraudulent activity, and
-          improve our website and services.
+          To process and deliver your purchases, we collect:
         </p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li><strong>Shipping Address:</strong> Specific street address, city, and selected administrative district across Nepal.</li>
+          <li><strong>Order Details:</strong> Products ordered, flavors, sizes, quantities, order status, order history, and tracking timeline.</li>
+          <li><strong>Recipient Contact:</strong> Contact number and recipient name for delivery dispatch.</li>
+        </ul>
 
-        <h3 className="text-base font-bold text-black mt-4">
-          3. Payment Data Security
+        <h3 className="text-base font-bold text-slate-900 mt-5">
+          3. Payment Information &amp; Data Security
         </h3>
         <p>
-          Online payments are processed through the applicable payment
-          providers, such as eSewa, when available. Nepal Protein does not
-          ask customers to share their payment passwords, banking PINs,
-          or one-time passwords through customer support channels.
-          Payment information handled by third-party providers is subject
-          to their respective privacy and security practices.
+          Nepal Protein supports <strong>Cash on Delivery (COD)</strong> and digital payments via <strong>eSewa</strong>:
         </p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li><strong>Digital Payments (eSewa):</strong> Online payments are processed directly through eSewa's secure payment gateway. Nepal Protein <em>never</em> requests, collects, or stores your banking passwords, eSewa MPIN, credit/debit card numbers, or one-time payment passcodes.</li>
+          <li><strong>Cash on Delivery (COD):</strong> No financial payment information is collected online; payment is handed directly in cash to the delivery courier upon receipt of the package.</li>
+        </ul>
 
-        <h3 className="text-base font-bold text-black mt-4">
-          4. Third-Party Sharing
+        <h3 className="text-base font-bold text-slate-900 mt-5">
+          4. How We Use Your Information
         </h3>
         <p>
-          We may share necessary information with authorized delivery
-          partners, payment providers, and service providers to fulfill
-          orders, process payments, maintain website functionality, and
-          protect against fraud. We do not authorize these parties to use
-          your information for unrelated purposes beyond their permitted
-          services and legal obligations.
+          We use your information exclusively for legitimate e-commerce operations:
         </p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>Processing, confirming, and fulfilling your orders.</li>
+          <li>Communicating order status updates and shipping notifications.</li>
+          <li>Providing responsive customer support for inquiries, order tracking, and returns.</li>
+          <li>Preventing fraudulent orders and maintaining platform security.</li>
+        </ul>
 
-        <h3 className="text-base font-bold text-black mt-4">
-          5. Data Storage &amp; Security
+        <h3 className="text-base font-bold text-slate-900 mt-5">
+          5. Cookies, Local Storage &amp; Session Management
         </h3>
         <p>
-          We take reasonable technical and organizational measures to
-          protect personal information against unauthorized access,
-          alteration, disclosure, or loss. However, no online system or
-          method of electronic storage can be guaranteed to be completely
-          secure.
+          Our application utilizes browser <strong>Local Storage</strong> and essential session
+          tokens (JSON Web Tokens) strictly to maintain your logged-in session, preserve your
+          shopping cart items, and keep your wishlist intact across visits. We do not use third-party
+          surveillance trackers or sell your browsing behaviors to advertising networks.
         </p>
 
-        <h3 className="text-base font-bold text-black mt-4">
-          6. Cookies &amp; Website Technologies
+        <h3 className="text-base font-bold text-slate-900 mt-5">
+          6. Third-Party Service Providers &amp; Sharing
         </h3>
         <p>
-          Our website may use cookies or similar technologies to support
-          essential website functions, maintain sessions, remember preferences,
-          and understand website usage. You can manage available cookie
-          preferences through your browser settings, although disabling
-          certain cookies may affect website functionality.
+          We share necessary data solely with trusted third-party operational partners required to complete your service:
+        </p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li><strong>Logistics &amp; Courier Partners:</strong> Name, delivery address, and phone number are shared to deliver packages within Kathmandu Valley and nationwide districts across Nepal.</li>
+          <li><strong>Payment Processors (eSewa):</strong> Order reference and payable amount for transaction verification.</li>
+          <li><strong>Communication Providers:</strong> Secure automated email services for account verification OTPs and order invoices.</li>
+        </ul>
+        <p>
+          We do not sell, rent, or trade your personal information to third parties for independent marketing.
         </p>
 
-        <h3 className="text-base font-bold text-black mt-4">
-          7. Data Retention
+        <h3 className="text-base font-bold text-slate-900 mt-5">
+          7. Data Storage, Retention &amp; Security
         </h3>
         <p>
-          We retain personal information only for as long as reasonably
-          necessary to fulfill orders, provide services, maintain business
-          records, resolve disputes, protect website security, and meet
-          applicable legal requirements.
+          We implement technical and organizational safeguards to protect your personal data from unauthorized access, alteration, or disclosure. Personal and order data is retained only for as long as necessary to fulfill orders, maintain statutory tax/financial records, resolve disputes, and comply with applicable laws of Nepal.
         </p>
 
-        <h3 className="text-base font-bold text-black mt-4">
-          8. Your Privacy Rights
+        <h3 className="text-base font-bold text-slate-900 mt-5">
+          8. Your Rights &amp; Account Control
         </h3>
         <p>
-          You may contact us to request access to, correction of, or
-          information about your personal data, subject to applicable law
-          and legitimate record-keeping requirements. We may need to verify
-          your identity before processing certain requests.
+          You have full access to view and update your profile details and saved addresses directly in your account dashboard. You may request review or correction of your personal data by contacting our support team at <a href="mailto:osoaanepal@gmail.com" className="text-orange-600 font-semibold hover:underline">osoaanepal@gmail.com</a>.
         </p>
 
-        <h3 className="text-base font-bold text-black mt-4">
+        <h3 className="text-base font-bold text-slate-900 mt-5">
           9. Children's Privacy
         </h3>
         <p>
-          Our website is not intended to encourage children to make purchases
-          without appropriate parental or guardian involvement. We do not
-          knowingly collect personal information from children in violation
-          of applicable law.
+          Our platform is intended for adult consumers and fitness enthusiasts. We do not knowingly collect personal information from individuals under the age of 16 without parental or legal guardian guidance.
         </p>
 
-        <h3 className="text-base font-bold text-black mt-4">
+        <h3 className="text-base font-bold text-slate-900 mt-5">
           10. Changes to This Privacy Policy
         </h3>
         <p>
-          Nepal Protein may update this Privacy Policy to reflect changes
-          in our services, data-handling practices, or legal requirements.
-          Updates will be published on this page along with the revised
-          policy text.
-        </p>
-
-        <h3 className="text-base font-bold text-black mt-4">
-          11. Contact Us
-        </h3>
-        <p>
-          If you have questions about this Privacy Policy or how your
-          personal information is handled, please contact Nepal Protein
-          through the contact details provided on our website.
+          Nepal Protein reserves the right to update this policy to reflect platform updates, technical adjustments, or legislative changes in Nepal. All updates are published directly on this page with immediate effect.
         </p>
       </div>
-
     );
   } else {
     title = 'Terms & Conditions';
     content = (
-
-      <div className="space-y-4 text-xs sm:text-sm text-slate-700 leading-relaxed">
+      <div className="space-y-5 text-xs sm:text-sm text-slate-700 leading-relaxed">
         <p>
-          Welcome to Nepal Protein. By accessing our website, browsing our
-          products, or placing an order, you agree to the following Terms
-          and Conditions. Please read them carefully before making a purchase.
+          Welcome to <strong>Nepal Protein</strong>. By browsing our website, creating an account,
+          or placing an order, you agree to comply with and be bound by the following Terms and Conditions.
+          Please read them carefully before making a purchase.
         </p>
 
-        <h3 className="text-base font-bold text-black mt-4">
-          1. Pricing &amp; NPR Currency
+        <h3 className="text-base font-bold text-slate-900 mt-5">
+          1. Currency &amp; Pricing
         </h3>
         <p>
-          All prices displayed on Nepal Protein are listed in Nepalese Rupees
-          (NPR / Rs.), unless otherwise stated. Prices, product availability,
-          and promotional offers may change without prior notice. The price
-          applicable to your order will be the price displayed at checkout.
+          All product prices on Nepal Protein are stated in <strong>Nepalese Rupees (NPR / Rs.)</strong>.
+          Prices, promotions, and stock availability are subject to change without prior notice. The price
+          payable is the total confirmed on the checkout screen at the time your order is submitted.
         </p>
 
-        <h3 className="text-base font-bold text-black mt-4">
-          2. Product Information &amp; Authenticity
+        <h3 className="text-base font-bold text-slate-900 mt-5">
+          2. Product Authenticity &amp; Health Disclaimer
         </h3>
         <p>
-          Nepal Protein offers supplements, nutrition products, and fitness
-          accessories from various brands. We aim to provide genuine products
-          sourced from reliable suppliers. Customers should check product
-          packaging, batch details, expiry dates, and factory seals where
-          applicable upon delivery. Contact our support team if you receive
-          a damaged, tampered with, or incorrect product.
+          Nepal Protein supplies authentic nutritional supplements, whey proteins, vitamins, and fitness
+          accessories sourced from authorized distributors.
+        </p>
+        <p className="bg-amber-50 border border-amber-200 text-amber-900 p-3.5 rounded-xl">
+          <strong>Health Notice:</strong> Dietary and nutritional supplements are intended to support your fitness
+          and dietary goals and are not medicinal substitutes for professional medical diagnosis, advice, or treatment.
+          Always consult a certified healthcare professional before beginning any intensive supplement regimen,
+          especially if you have pre-existing medical conditions, are pregnant, or are taking medication.
         </p>
 
-        <h3 className="text-base font-bold text-black mt-4">
-          3. Product Usage &amp; Health Consultation
+        <h3 className="text-base font-bold text-slate-900 mt-5">
+          3. Account Registration &amp; Security
         </h3>
         <p>
-          Supplements should be used according to the manufacturer's
-          instructions and the directions provided on the product label.
-          Consult a qualified healthcare professional before use if you
-          have a medical condition, take medication, or have concerns about
-          using a supplement. Supplements are not a substitute for a balanced
-          diet or prescribed medical treatment.
+          When creating an account, you agree to provide truthful and complete information, including a valid
+          10-digit Nepalese mobile number. You are responsible for safeguarding your login credentials. Notify
+          us immediately of any suspected unauthorized use of your account.
         </p>
 
-        <h3 className="text-base font-bold text-black mt-4">
-          4. Orders &amp; Availability
+        <h3 className="text-base font-bold text-slate-900 mt-5">
+          4. Ordering &amp; Payment Terms
+        </h3>
+        <ul className="list-disc pl-5 space-y-1">
+          <li><strong>Payment Methods:</strong> We accept Cash on Delivery (COD) and eSewa digital wallet payments.</li>
+          <li><strong>eSewa Transactions:</strong> Digital orders are confirmed upon successful online transaction verification through the payment gateway.</li>
+          <li><strong>Cash on Delivery:</strong> COD customers are obligated to provide exact payment in cash to the delivery partner upon physical delivery.</li>
+        </ul>
+
+        <h3 className="text-base font-bold text-slate-900 mt-5">
+          5. Shipping &amp; Delivery Across Nepal
         </h3>
         <p>
-          All orders are subject to product availability and confirmation.
-          Please provide accurate contact details and delivery information
-          when placing an order. We may need to cancel or decline orders
-          because of stock shortages, pricing errors, technical issues,
-          or suspected fraudulent activity. Any payment collected for a
-          cancelled order will be handled according to the applicable refund
-          process and consumer protection requirements.
+          Delivery timelines are estimated as 1–2 business days inside Kathmandu Valley and 2–4 business days
+          for major cities and accessible districts across Nepal. Delivery fees depend on the recipient district
+          and are calculated transparently during checkout. Unforeseen courier delays due to road blockades,
+          weather extremes, or public holidays may occasionally occur.
         </p>
 
-        <h3 className="text-base font-bold text-black mt-4">
-          5. Payments
+        <h3 className="text-base font-bold text-slate-900 mt-5">
+          6. Order Cancellation Policy
         </h3>
         <p>
-          Available payment methods may include eSewa and Cash on Delivery
-          (COD), depending on your location and the options displayed at
-          checkout. Online payments are subject to successful confirmation
-          by the relevant payment provider. COD orders must be paid for
-          upon delivery.
+          Nepal Protein provides self-service order cancellation directly from your customer account dashboard:
+        </p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li><strong>Eligible Statuses:</strong> You may cancel your order at any time while the order status remains <code>PENDING</code> or <code>CONFIRMED</code>. Reserved inventory is automatically returned to stock.</li>
+          <li><strong>Ineligible Statuses:</strong> Once an order transitions to <code>PROCESSING</code>, <code>SHIPPED</code>, or <code>DELIVERED</code>, self-service cancellation is disabled because the parcel has been packed or dispatched for transit. For assistance after dispatch, you must contact customer support.</li>
+        </ul>
+
+        <h3 className="text-base font-bold text-slate-900 mt-5">
+          7. Returns, Replacements &amp; Refunds
+        </h3>
+        <p>
+          Due to strict hygiene, food safety, and quality standards, <strong>nutritional supplements and sealed products cannot be returned once their manufacturer seal has been broken, opened, or tampered with</strong>.
+        </p>
+        <p>
+          If your shipment arrives damaged, defective, leaking, or with incorrect items, you must contact our customer support team promptly with your order number and clear photographic/video proof. Verified claims are eligible for a free replacement or a full refund.
         </p>
 
-        <h3 className="text-base font-bold text-black mt-4">
-          6. Shipping &amp; Delivery
+        <div className="p-4 rounded-2xl bg-orange-50 border border-orange-200 text-orange-950 space-y-2">
+          <h4 className="text-xs font-black uppercase tracking-wider text-orange-900">
+            Business Details Subject to Business Owner Confirmation
+          </h4>
+          <p className="text-xs text-orange-900/90 leading-relaxed">
+            The following commercial and administrative terms are subject to final confirmation by Nepal Protein's business management:
+          </p>
+          <ul className="list-disc pl-5 text-xs text-orange-900/90 space-y-1">
+            <li><strong>Exact Return Window:</strong> Standard return notification period (e.g., within 7 calendar days of delivery for eligible unopened goods).</li>
+            <li><strong>Corporate Registration:</strong> Official registered company name, PAN (Permanent Account Number), and VAT registration numbers.</li>
+            <li><strong>Designated Jurisdiction:</strong> Specific judicial district court for dispute resolution (e.g., Kathmandu District Court, Nepal).</li>
+            <li><strong>Hardware/Accessory Warranty:</strong> Specific brand warranty duration for gym accessories, shakers, and non-consumable gear.</li>
+          </ul>
+        </div>
+
+        <h3 className="text-base font-bold text-slate-900 mt-5">
+          8. Intellectual Property &amp; Website Usage
         </h3>
         <p>
-          Delivery times and charges depend on your delivery district,
-          product availability, and courier service conditions. Applicable
-          delivery charges will be displayed during checkout or communicated
-          before order confirmation. Delivery estimates may change due to
-          weather, transportation disruptions, public holidays, or other
-          circumstances beyond our reasonable control.
+          All trademarks, logos, brand names, product photographs, and text published on Nepal Protein belong
+          to Nepal Protein or the respective brand manufacturers. Commercial exploitation or unauthorized scraping
+          is strictly prohibited.
         </p>
 
-        <h3 className="text-base font-bold text-black mt-4">
-          7. Returns &amp; Damaged Products
+        <h3 className="text-base font-bold text-slate-900 mt-5">
+          9. Governing Law
         </h3>
         <p>
-          Returns are subject to our applicable return policy. Supplements
-          and other sealed products must remain unopened, unused, and
-          untampered with to qualify for a return where permitted. Products
-          with broken, removed, or tampered seals are generally not eligible
-          for return, except where applicable law requires otherwise.
-          If you receive a damaged, defective, or incorrect product, contact
-          our support team with your order number and clear photos or videos
-          of the issue. Applicable consumer rights remain unaffected.
+          These Terms and Conditions and any separate agreements shall be governed by and construed in accordance
+          with the prevailing laws of Nepal.
         </p>
 
-        <h3 className="text-base font-bold text-black mt-4">
-          8. Website Use &amp; Intellectual Property
+        <h3 className="text-base font-bold text-slate-900 mt-5">
+          10. Contact Information
         </h3>
         <p>
-          Website content, including text, graphics, logos, and design
-          elements, belongs to Nepal Protein or the respective rights holders,
-          unless otherwise stated. Unauthorized reproduction or commercial
-          use is prohibited. Users must not misuse the website, attempt
-          unauthorized access, or interfere with its operation.
-        </p>
-
-        <h3 className="text-base font-bold text-black mt-4">
-          9. Privacy &amp; Personal Information
-        </h3>
-        <p>
-          Customer information may be used to process orders, arrange
-          deliveries, provide support, communicate order updates, and
-          maintain website security. Personal information will be handled
-          according to our Privacy Policy and applicable laws.
-        </p>
-
-        <h3 className="text-base font-bold text-black mt-4">
-          10. Changes to These Terms
-        </h3>
-        <p>
-          Nepal Protein may update these Terms and Conditions when business
-          practices, website features, or legal requirements change. Updated
-          terms will be published on this page.
-        </p>
-
-        <h3 className="text-base font-bold text-black mt-4">
-          11. Contact Information
-        </h3>
-        <p>
-          For questions about these Terms, products, orders, or returns,
-          please contact our customer support team using the contact details
-          provided on the Nepal Protein website.
+          For questions regarding these Terms or orders, please contact us at{' '}
+          <a href="mailto:osoaanepal@gmail.com" className="text-orange-600 font-semibold hover:underline">
+            osoaanepal@gmail.com
+          </a>.
         </p>
       </div>
-
     );
   }
 
@@ -595,17 +568,17 @@ export const PoliciesPage = () => {
   ];
 
   const policyDescriptions = {
-    'Shipping & Delivery Policy': 'Official shipping, logistics, and nationwide delivery timelines across Nepal for OSOAA fitness nutrition and supplements.',
-    'Return & Refund Policy': 'Official return, replacement, and refund policies for authentic sealed supplements purchased on OSOAA Nepal.',
-    'Privacy Policy': 'Our data protection, confidentiality, and customer privacy terms at OSOAA Nepal.',
-    'Terms & Conditions': 'Official terms and conditions governing purchases and usage of the OSOAA Nepal e-commerce platform.',
+    'Shipping & Delivery Policy': 'Official shipping, logistics, and nationwide delivery timelines across Nepal for Nepal Protein fitness nutrition and supplements.',
+    'Return & Refund Policy': 'Official return, replacement, and refund policies for authentic sealed supplements purchased on Nepal Protein.',
+    'Privacy Policy': 'Our data protection, confidentiality, and customer privacy terms at Nepal Protein.',
+    'Terms & Conditions': 'Official terms and conditions governing purchases and usage of the Nepal Protein e-commerce platform.',
   };
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-8 bg-white min-h-[75vh]">
       <SEO
         title={title}
-        description={policyDescriptions[title] || `${title} for OSOAA Nepal.`}
+        description={policyDescriptions[title] || `${title} for Nepal Protein.`}
         canonical={path}
         breadcrumbs={breadcrumbs}
       />

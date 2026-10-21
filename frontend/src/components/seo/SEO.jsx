@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { siteConfig, getCanonicalUrl } from '../../config/siteConfig';
 
 /**
- * Universal SEO Component for Nepal protein.
+ * Universal SEO Component for Nepal protein .
  * Injects titles, meta tags, canonical links, Open Graph, Twitter Cards,
  * and Schema.org JSON-LD structured data into the document head.
  */
@@ -35,21 +35,8 @@ export const SEO = ({
   const canonicalPath = canonical || location.pathname;
   const canonicalUrl = getCanonicalUrl(canonicalPath);
 
-  // Fallback OG Image & HTTPS Normalization
-  const resolveOgImage = (img) => {
-    if (!img) return 'https://images.unsplash.com/photo-1593095948071-474c5cc2989d?w=1200&auto=format&fit=crop&q=80';
-    if (typeof img === 'string') {
-      if (img.startsWith('http://nepalprotein.com')) {
-        return img.replace(/^http:\/\//i, 'https://');
-      }
-      if (img.startsWith('http://') || img.startsWith('https://')) {
-        return img;
-      }
-      return getCanonicalUrl(img);
-    }
-    return img;
-  };
-  const finalOgImage = resolveOgImage(ogImage);
+  // Fallback OG Image
+  const finalOgImage = ogImage || 'https://images.unsplash.com/photo-1593095948071-474c5cc2989d?w=1200&auto=format&fit=crop&q=80';
 
   // Build JSON-LD schemas
   const schemas = [];
@@ -59,20 +46,14 @@ export const SEO = ({
     schemas.push({
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
-      itemListElement: breadcrumbs.map((crumb, index) => {
-        let itemUrl = crumb.item || '';
-        if (typeof itemUrl === 'string' && itemUrl.startsWith('http://nepalprotein.com')) {
-          itemUrl = itemUrl.replace(/^http:\/\//i, 'https://');
-        } else if (typeof itemUrl === 'string' && !itemUrl.startsWith('http://') && !itemUrl.startsWith('https://')) {
-          itemUrl = getCanonicalUrl(itemUrl);
-        }
-        return {
-          '@type': 'ListItem',
-          position: index + 1,
-          name: crumb.name,
-          item: itemUrl,
-        };
-      }),
+      itemListElement: breadcrumbs.map((crumb, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        name: crumb.name,
+        item: crumb.item?.startsWith('http')
+          ? crumb.item
+          : getCanonicalUrl(crumb.item || ''),
+      })),
     });
   }
 
