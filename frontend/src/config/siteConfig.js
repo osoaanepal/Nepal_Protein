@@ -1,15 +1,24 @@
 /**
  * Centralized SEO & Site Configuration for Nepal Protein.
  * 
- * Production URL must be provided via the VITE_SITE_URL environment variable
- * without a trailing slash (e.g. VITE_SITE_URL=https://your-domain.com).
- * 
- * Never hardcodes an assumed production domain.
+ * Production canonical domain is https://nepalprotein.com
+ * In non-production environments, VITE_SITE_URL can override this.
  */
 
-const rawSiteUrl = import.meta.env.VITE_SITE_URL || '';
+export const PRODUCTION_SITE_URL = 'https://nepalprotein.com';
+
+// Resolve configured site URL, defaulting to production domain in production builds
+const rawSiteUrl = import.meta.env.VITE_SITE_URL || (import.meta.env.PROD ? PRODUCTION_SITE_URL : '');
+
 // Clean trailing slash if present
-export const SITE_URL = rawSiteUrl ? rawSiteUrl.replace(/\/+$/, '') : '';
+let cleanSiteUrl = rawSiteUrl ? rawSiteUrl.trim().replace(/\/+$/, '') : '';
+
+// Ensure HTTP is upgraded to HTTPS for nepalprotein.com
+if (cleanSiteUrl.startsWith('http://nepalprotein.com')) {
+  cleanSiteUrl = cleanSiteUrl.replace(/^http:\/\//i, 'https://');
+}
+
+export const SITE_URL = cleanSiteUrl;
 
 export const siteConfig = {
   name: 'Nepal Protein',
@@ -38,24 +47,40 @@ export const siteConfig = {
 
 /**
  * Build a canonical URL for any route.
- * If VITE_SITE_URL is set, returns absolute URL: https://example.com/path
- * If VITE_SITE_URL is not set:
- *   - In browser environments, falls back to window.location.origin + path (for testing / dev)
- *   - Otherwise returns the relative clean path
+ * 
+ * Rules:
+ * - Homepage ('/' or '') always resolves with trailing slash: https://nepalprotein.com/
+ * - Other public routes resolve without trailing slash: https://nepalprotein.com/shop
+ * - Absolute URLs with http://nepalprotein.com are upgraded to HTTPS.
  */
 export const getCanonicalUrl = (path = '') => {
+  // If already an absolute URL, normalize protocol if nepalprotein.com
+  if (typeof path === 'string' && (path.startsWith('http://') || path.startsWith('https://'))) {
+    if (path.startsWith('http://nepalprotein.com')) {
+      return path.replace(/^http:\/\//i, 'https://');
+    }
+    return path;
+  }
+
   // Ensure path starts with a leading slash and remove trailing slash (except root '/')
   let clean = path.startsWith('/') ? path : `/${path}`;
   if (clean.length > 1 && clean.endsWith('/')) {
     clean = clean.slice(0, -1);
   }
 
-  if (SITE_URL) {
-    return `${SITE_URL}${clean === '/' ? '' : clean}`;
+  // Base URL resolution
+  let base = SITE_URL;
+  if (!base && typeof window !== 'undefined' && window.location?.origin) {
+    base = window.location.origin.replace(/\/+$/, '');
   }
 
-  if (typeof window !== 'undefined' && window.location?.origin) {
-    return `${window.location.origin}${clean === '/' ? '' : clean}`;
+  // Enforce HTTPS for nepalprotein.com
+  if (base && base.startsWith('http://nepalprotein.com')) {
+    base = base.replace(/^http:\/\//i, 'https://');
+  }
+
+  if (base) {
+    return clean === '/' ? `${base}/` : `${base}${clean}`;
   }
 
   return clean;

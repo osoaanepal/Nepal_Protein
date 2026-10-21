@@ -46,17 +46,17 @@ export const buildOrganizationSchema = () => {
  */
 export const buildWebSiteSchema = () => {
   const siteUrl = getCanonicalUrl('/');
+  const searchUrl = getCanonicalUrl('/shop');
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: siteConfig.name,
-    alternateName: 'Nepal Protein',
     url: siteUrl,
     potentialAction: {
       '@type': 'SearchAction',
       target: {
         '@type': 'EntryPoint',
-        urlTemplate: `${siteUrl}shop?keyword={search_term_string}`,
+        urlTemplate: `${searchUrl}?keyword={search_term_string}`,
       },
       'query-input': 'required name=search_term_string',
     },
@@ -134,7 +134,6 @@ export const buildArticleSchema = (post) => {
   if (!post) return null;
 
   const canonicalUrl = getCanonicalUrl(`/blog/${post.slug}`);
-  const siteUrl = getCanonicalUrl('/');
 
   return {
     '@context': 'https://schema.org',
@@ -158,7 +157,7 @@ export const buildArticleSchema = (post) => {
       name: siteConfig.name,
       logo: {
         '@type': 'ImageObject',
-        url: `${siteUrl}favicon.svg`,
+        url: getCanonicalUrl('/favicon.svg'),
       },
     },
     articleSection: post.category || 'Fitness & Nutrition',
