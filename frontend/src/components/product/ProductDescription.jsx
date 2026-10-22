@@ -5,9 +5,66 @@ import { sanitizeHtml } from '../../utils/blogUtils';
  * Checks whether a given string contains genuine HTML tags.
  * Ensures symbols like '< 200mg' or 'Strength < Power' are not mistaken for HTML.
  */
-const isHtmlContent = (text) => {
+export const isHtmlContent = (text) => {
   if (!text || typeof text !== 'string') return false;
   return /<\/?(p|ul|ol|li|strong|b|em|i|h[1-6]|div|span|br|table|thead|tbody|tr|th|td|blockquote|a)\b[^>]*>/i.test(text);
+};
+
+/**
+ * Strips all leading bullet and numbered markers, including duplicate/nested markers:
+ * e.g. "• - Point" -> "Point"
+ *      "1. • Point" -> "Point"
+ *      "- - Point" -> "Point"
+ *      "1) Point" -> "Point"
+ * Avoids touching words like "High-Quality" or "Non-GMO".
+ */
+export const cleanLeadingMarkers = (line) => {
+  if (!line || typeof line !== 'string') return '';
+  let cleaned = line.trim();
+
+  let modified = true;
+  while (modified && cleaned.length > 0) {
+    modified = false;
+
+    // 1. Strip leading numbered markers: e.g. "1.", "1)", "(1)", "[1]", "1 -", "1.1.", "a.", "a)", "i.", "i)"
+    const numMatch = cleaned.match(/^(\(?\d+(?:\.\d+)*[.)\]]|\(\d+\)|\[\d+\]|\d+\s*[-–—]|[a-zA-Z][.)]|[ivxIVX]+[.)])\s*/);
+    if (numMatch) {
+      cleaned = cleaned.slice(numMatch[0].length).trim();
+      modified = true;
+      continue;
+    }
+
+    // 2. Strip leading bullet characters: e.g. •, -, *, +, –, —, ▪, ▫, ◦, ‣, ⁃, ∙, ✓, ✔, ►, ▸, →, ◆, ✦, ★, >, ~
+    const bulletMatch = cleaned.match(/^([-*+•–—▪▫◦‣⁃∙✓✔►▸→◆✦★>~]+)\s*/);
+    if (bulletMatch) {
+      cleaned = cleaned.slice(bulletMatch[0].length).trim();
+      modified = true;
+      continue;
+    }
+  }
+
+  return cleaned;
+};
+
+/**
+ * Checks if a line starts with a list marker (bullet or numbered).
+ */
+export const hasLeadingMarker = (line) => {
+  if (!line || typeof line !== 'string') return false;
+  const trimmed = line.trim();
+  if (!trimmed) return false;
+
+  // Numbered markers: 1., 1), (1), [1], 1 -, a., a), i., i)
+  if (/^(\(?\d+(?:\.\d+)*[.)\]]|\(\d+\)|\[\d+\]|\d+\s*[-–—]|[a-zA-Z][.)]|[ivxIVX]+[.)])(?:\s+|$|[A-Za-z0-9])/.test(trimmed)) {
+    return true;
+  }
+
+  // Bullet characters: •, -, *, +, –, —, ▪, ▫, ◦, ‣, ⁃, ∙, ✓, ✔, ►, ▸, →, ◆, ✦, ★, >, ~
+  if (/^[-*+•–—▪▫◦‣⁃∙✓✔►▸→◆✦★>~]+(?:\s+|$|[A-Za-z0-9])/.test(trimmed)) {
+    return true;
+  }
+
+  return false;
 };
 
 /**
@@ -43,30 +100,79 @@ export const renderInlineFormattedText = (text) => {
 /**
  * Parses an individual list item's content to extract label and description.
  * Examples:
- * - "High-Quality Whey Protein – Delivers 24g..." -> label: "High-Quality Whey Protein", text: "Delivers 24g..."
+ * - "High-Potency Vitamin C: Each tablet provides..." -> label: "High-Potency Vitamin C", text: "Each tablet provides..."
  * - "**Key Benefits:** Contains 3g..." -> label: "Key Benefits", text: "Contains 3g..."
+ * - "Enhanced Strength – Delivers 3g..." -> label: "Enhanced Strength", text: "Delivers 3g..."
  * - "Ultra pure formulation..." -> label: null, text: "Ultra pure formulation..."
  */
-const parseListItemContent = (rawContent) => {
+export const parseListItemContent = (rawContent) => {
+  if (!rawContent || typeof rawContent !== 'string') {
+    return { label: null, text: '' };
+  }
   const content = rawContent.trim();
-
-  // Pattern 1: Markdown bold label at start: **Title:** Details or **Title** – Details
-  const boldPrefixMatch = content.match(/^\*\*([^*]+)\*\*[:\s–—-]*(.*)$/);
-  if (boldPrefixMatch) {
-    return {
-      label: boldPrefixMatch[1].replace(/[:–—-]+$/, '').trim(),
-      text: boldPrefixMatch[2].trim(),
-    };
+  if (!content) {
+    return { label: null, text: '' };
   }
 
-  // Pattern 2: Separator like en-dash '–', em-dash '—', colon ':', or spaced hyphen ' - '
-  // Keep label length reasonable (< 60 chars) so whole sentences aren't mistaken for labels
-  const dashMatch = content.match(/^([^–—:]+?)\s*(?:[–—]|:\s+|\s+-\s+)(.+)$/);
-  if (dashMatch && dashMatch[1].length < 60 && !dashMatch[1].includes('http')) {
-    return {
-      label: dashMatch[1].replace(/[:–—-]+$/, '').trim(),
-      text: dashMatch[2].trim(),
-    };
+  // Pattern 1: Markdown bold label at start: **Title:** Details or **Title**: Details or **Title** – Details
+  const boldPrefixMatch = content.match(/^\*\*([^*]+)\*\*[:\s–—-]*(.*)$/);
+  if (boldPrefixMatch) {
+    const rawLabel = boldPrefixMatch[1].replace(/[:–—-]+$/, '').trim();
+    const rawText = boldPrefixMatch[2].trim();
+    if (rawLabel) {
+      return {
+        label: rawLabel,
+        text: rawText,
+      };
+    }
+  }
+
+  // Pattern 2: Markdown italic label at start: *Title:* Details
+  const italicPrefixMatch = content.match(/^\*([^*]+)\*[:\s–—-]*(.*)$/);
+  if (italicPrefixMatch) {
+    const rawLabel = italicPrefixMatch[1].replace(/[:–—-]+$/, '').trim();
+    const rawText = italicPrefixMatch[2].trim();
+    if (rawLabel) {
+      return {
+        label: rawLabel,
+        text: rawText,
+      };
+    }
+  }
+
+  // Pattern 3: Heading followed by colon: "Heading: Details" or "Heading:Details"
+  // Keep label reasonable in length (2-80 chars), not a URL protocol (http:, https:, ftp:, mailto:),
+  // and ensure label doesn't contain multiple sentence endings (avoid matching mid-sentence colons in a long paragraph)
+  const colonMatch = content.match(/^([^:\n\r]{2,80}):\s*(.*)$/);
+  if (colonMatch) {
+    const candidateLabel = colonMatch[1].trim();
+    const candidateText = colonMatch[2].trim();
+    const isUrl = /^(https?|ftp|mailto|tel)$/i.test(candidateLabel);
+    const hasMultipleSentences = /[.!?]\s+[A-Z]/.test(candidateLabel);
+
+    if (!isUrl && !hasMultipleSentences && candidateText.length > 0) {
+      return {
+        label: candidateLabel.replace(/[:–—-]+$/, '').trim(),
+        text: candidateText,
+      };
+    }
+  }
+
+  // Pattern 4: Heading followed by en-dash '–', em-dash '—', or spaced hyphen ' - '
+  // e.g. "High-Quality Whey Protein – Delivers 24g..."
+  const dashMatch = content.match(/^([^–—\n\r]{2,80}?)\s*(?:[–—]|\s+-\s+)(.+)$/);
+  if (dashMatch) {
+    const candidateLabel = dashMatch[1].replace(/[:–—-]+$/, '').trim();
+    const candidateText = dashMatch[2].trim();
+    const isUrl = candidateLabel.includes('http') || candidateLabel.includes('://');
+    const hasMultipleSentences = /[.!?]\s+[A-Z]/.test(candidateLabel);
+
+    if (!isUrl && !hasMultipleSentences && candidateText.length > 0) {
+      return {
+        label: candidateLabel,
+        text: candidateText,
+      };
+    }
   }
 
   return {
@@ -77,11 +183,10 @@ const parseListItemContent = (rawContent) => {
 
 /**
  * Pre-processes and tokenizes plain text/markdown descriptions into structured AST blocks:
- * headings, bullet/numbered lists, and paragraphs.
+ * headings, bullet lists, and paragraphs.
  *
- * Handles legacy database entries where multiple hyphen points were entered without line breaks:
- * e.g. "-High-Quality Whey... -Enhanced Strength... -NABL-Tested..."
- * while preserving compound words like "High-Quality", "post-workout", and "NABL-Tested".
+ * Automatically converts list-like items (newlines, paragraphs, bullets, numbers, heading-colon points)
+ * into semantic unordered lists with Nepal Protein styling, while preserving plain prose paragraphs.
  */
 export const parseDescriptionBlocks = (raw) => {
   if (!raw || typeof raw !== 'string') return [];
@@ -93,116 +198,178 @@ export const parseDescriptionBlocks = (raw) => {
     return [{ type: 'html', content: text }];
   }
 
-  // Normalize line breaks (\r\n -> \n)
+  // 1. Normalize line breaks (\r\n -> \n, \r -> \n)
   let normalized = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
-  // Handle leading hyphen/bullet without trailing space: e.g. "-High-Quality" -> "- High-Quality"
-  normalized = normalized.replace(/^[-•*](?=[A-Za-z0-9\u0900-\u097F])/, '$& ');
+  // 2. Insert space after leading bullet or number marker at line start if missing:
+  // e.g. "-High-Quality" -> "- High-Quality", "•High-Potency" -> "• High-Potency", "1.High" -> "1. High", "1)High" -> "1) High"
+  normalized = normalized.replace(/(^|\n)\s*([-*+•–—▪▫◦‣⁃∙✓✔►▸→◆✦★>]|\d+[.)]|\(\d+\))(?=[A-Za-z0-9\u0900-\u097F])/g, '$1$2 ');
 
-  // Split clumped bullet points on a single line when preceded by whitespace or sentence ending:
-  // e.g. "recovery. -Enhanced" or "intensity. -NABL-Tested"
-  // Whitespace check ensures words like "High-Quality" or "ultra-filtered" are untouched.
-  normalized = normalized.replace(/([.!?]|\s)\s*([•*]|-)\s*(?=[A-Za-z0-9\u0900-\u097F])/g, '$1\n$2 ');
+  // 3. Split clumped bullet points on a single line when preceded by punctuation or whitespace:
+  // e.g. "recovery. -Enhanced" or "intensity. • NABL-Tested" or "system. 1) Enhanced"
+  normalized = normalized.replace(/([.!?;\n]|\s)\s*([•▪▫◦‣⁃∙✓✔►▸→◆✦★])\s*(?=[A-Za-z0-9\u0900-\u097F])/g, '$1\n$2 ');
+  normalized = normalized.replace(/([.!?]\s+|\s+)-\s+(?=[A-Za-z0-9\u0900-\u097F])/g, '$1\n- ');
+  normalized = normalized.replace(/([.!?]\s+)\s*(\d+[.)]|\d+\)|\(\d+\))\s+(?=[A-Za-z0-9\u0900-\u097F])/g, '$1\n$2 ');
 
-  const rawLines = normalized.split('\n');
+  // 4. Split text into paragraph-level chunks by double line-breaks
+  const rawParagraphs = normalized.split(/\n\s*\n+/);
   const blocks = [];
-  let currentList = null;
-  let currentParagraphLines = [];
 
-  const flushParagraph = () => {
-    if (currentParagraphLines.length > 0) {
-      const pText = currentParagraphLines.join('\n').trim();
-      if (pText) {
-        blocks.push({ type: 'paragraph', text: pText });
-      }
-      currentParagraphLines = [];
+  const addListItem = (item) => {
+    if (!item || (!item.label && !item.text)) return;
+    const lastBlock = blocks[blocks.length - 1];
+    if (lastBlock && lastBlock.type === 'list') {
+      lastBlock.items.push(item);
+    } else {
+      blocks.push({
+        type: 'list',
+        items: [item],
+      });
     }
   };
 
-  const flushList = () => {
-    if (currentList && currentList.items.length > 0) {
-      blocks.push(currentList);
-      currentList = null;
+  const addParagraph = (pText) => {
+    const trimmed = pText.trim();
+    if (trimmed) {
+      blocks.push({ type: 'paragraph', text: trimmed });
     }
   };
 
-  for (let i = 0; i < rawLines.length; i++) {
-    const line = rawLines[i].trim();
-
-    // Blank line indicates block break
-    if (!line) {
-      flushParagraph();
-      flushList();
-      continue;
+  const addHeading = (level, hText) => {
+    const trimmed = hText.trim();
+    if (trimmed) {
+      blocks.push({ type: 'heading', level, text: trimmed });
     }
+  };
 
-    // Markdown Heading: # H1, ## H2, ### H3, #### H4
-    const headingMatch = line.match(/^(#{1,6})\s+(.*)$/);
+  let inListSection = false;
+
+  for (const rawParagraph of rawParagraphs) {
+    const para = rawParagraph.trim();
+    if (!para) continue;
+
+    // Check 1: Markdown Heading (# Title, ## Title, ### Title)
+    const headingMatch = para.match(/^(#{1,6})\s+(.*)$/);
     if (headingMatch) {
-      flushParagraph();
-      flushList();
-      blocks.push({
-        type: 'heading',
-        level: Math.min(Math.max(headingMatch[1].length, 2), 4),
-        text: headingMatch[2].trim(),
-      });
+      inListSection = false;
+      addHeading(
+        Math.min(Math.max(headingMatch[1].length, 2), 4),
+        headingMatch[2]
+      );
       continue;
     }
 
-    // Bold-only line acting as a section heading: e.g. **Key Benefits** or **Key Benefits:**
-    const boldHeadingMatch = line.match(/^\*\*([^*]+)\*\*[:]?$/);
+    // Check 2: Bold-only line acting as section heading (**Key Benefits** or **Key Benefits:**)
+    const boldHeadingMatch = para.match(/^\*\*([^*]+)\*\*[:]?$/);
     if (boldHeadingMatch) {
-      flushParagraph();
-      flushList();
-      blocks.push({
-        type: 'heading',
-        level: 3,
-        text: boldHeadingMatch[1].trim(),
-      });
+      inListSection = true;
+      addHeading(3, boldHeadingMatch[1]);
       continue;
     }
 
-    // Short line ending with a colon acting as a section header: e.g. "Key Benefits:" or "Why Choose Nepal Protein:"
-    if (line.endsWith(':') && line.length <= 45 && !line.startsWith('-') && !line.startsWith('•') && !line.startsWith('*')) {
-      flushParagraph();
-      flushList();
-      blocks.push({
-        type: 'heading',
-        level: 3,
-        text: line.slice(0, -1).trim(),
-      });
+    // Check 3: Short line ending with a colon acting as a section header
+    // e.g. "Key Benefits:" or "Why Choose Nepal Protein:" (length <= 50, does not start with bullet)
+    if (para.endsWith(':') && para.length <= 50 && !hasLeadingMarker(para)) {
+      inListSection = true;
+      addHeading(3, para.slice(0, -1));
       continue;
     }
 
-    // List item: starts with -, *, •, –, or numbered "1."
-    const bulletMatch = line.match(/^([-•*–]|\d+\.)\s*(.*)$/);
-    if (bulletMatch) {
-      flushParagraph();
-      const marker = bulletMatch[1];
-      const isOrdered = /^\d+\./.test(marker);
-      const rawItemContent = bulletMatch[2].trim();
+    // Check 4: Process lines within this paragraph chunk
+    const lines = para.split('\n').map((l) => l.trim()).filter(Boolean);
 
-      const parsedItem = parseListItemContent(rawItemContent);
+    // If chunk is a single line:
+    if (lines.length === 1) {
+      const line = lines[0];
 
-      if (!currentList || currentList.ordered !== isOrdered) {
-        flushList();
-        currentList = {
-          type: 'list',
-          ordered: isOrdered,
-          items: [],
-        };
+      // Check if line is a list item:
+      // a) Has leading bullet or number marker
+      // b) Starts with a heading followed by a colon (e.g. "High-Potency Vitamin C: Each tablet...")
+      // c) We are currently in a list section (e.g. under "Key Benefits:")
+      const hasMarker = hasLeadingMarker(line);
+      const cleaned = cleanLeadingMarkers(line);
+      const parsed = parseListItemContent(cleaned);
+
+      if (hasMarker || parsed.label !== null || inListSection) {
+        if (parsed.label !== null || parsed.text) {
+          addListItem(parsed);
+          continue;
+        }
       }
-      currentList.items.push(parsedItem);
+
+      // Otherwise, it's a single paragraph of plain prose
+      inListSection = false;
+      addParagraph(line);
       continue;
     }
 
-    // Ordinary narrative line
-    flushList();
-    currentParagraphLines.push(line);
-  }
+    // If chunk contains multiple lines (lines.length >= 2):
+    // Analyze whether these lines are separate list items or wrapped narrative prose.
+    const anyHasMarker = lines.some((l) => hasLeadingMarker(l));
+    const anyHasColonLabel = lines.some((l) => parseListItemContent(cleanLeadingMarkers(l)).label !== null);
+    const anyLowercaseContinuation = lines.slice(1).some((l) => /^[a-z]/.test(l));
 
-  flushParagraph();
-  flushList();
+    const isListChunk =
+      inListSection ||
+      anyHasMarker ||
+      anyHasColonLabel ||
+      (!anyLowercaseContinuation && lines.length >= 2);
+
+    if (isListChunk) {
+      // Process each line in this list chunk
+      let pendingIntroLines = [];
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        // Check if this line is an embedded section header: e.g. "Key Benefits:"
+        if (line.endsWith(':') && line.length <= 50 && !hasLeadingMarker(line)) {
+          if (pendingIntroLines.length > 0) {
+            addParagraph(pendingIntroLines.join(' '));
+            pendingIntroLines = [];
+          }
+          inListSection = true;
+          addHeading(3, line.slice(0, -1));
+          continue;
+        }
+
+        const hasMarker = hasLeadingMarker(line);
+        const cleaned = cleanLeadingMarkers(line);
+        const parsed = parseListItemContent(cleaned);
+
+        // If line 0 is an intro line before list items begin:
+        // (e.g. "Nepal Protein Vitamin C is a dietary supplement designed for health.")
+        // followed by items with colons or bullets
+        if (
+          i === 0 &&
+          !hasMarker &&
+          parsed.label === null &&
+          (anyHasMarker || anyHasColonLabel)
+        ) {
+          pendingIntroLines.push(line);
+          continue;
+        }
+
+        if (pendingIntroLines.length > 0) {
+          addParagraph(pendingIntroLines.join(' '));
+          pendingIntroLines = [];
+        }
+
+        if (parsed.label !== null || parsed.text) {
+          addListItem(parsed);
+        }
+      }
+
+      if (pendingIntroLines.length > 0) {
+        addParagraph(pendingIntroLines.join(' '));
+      }
+      continue;
+    }
+
+    // Otherwise, multi-line wrapped narrative prose
+    inListSection = false;
+    addParagraph(lines.join(' '));
+  }
 
   return blocks;
 };
@@ -238,42 +405,29 @@ export const ProductDescription = ({ description, className = '' }) => {
           );
         }
 
-        // Render List Block (Unordered or Ordered)
+        // Render List Block (Unordered)
         if (block.type === 'list') {
-          if (block.ordered) {
-            return (
-              <ol key={bIdx} className="space-y-2.5 my-3 pl-0.5">
-                {block.items.map((item, itemIdx) => (
-                  <li key={itemIdx} className="flex items-start gap-2.5 text-xs sm:text-sm text-slate-700 leading-relaxed">
-                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-orange-50 text-orange-600 font-bold text-xs flex items-center justify-center mt-0.5 border border-orange-200">
-                      {itemIdx + 1}
-                    </span>
-                    <div className="flex-1">
-                      {item.label && (
-                        <strong className="font-bold text-slate-900 mr-1.5">
-                          {renderInlineFormattedText(item.label)}:
-                        </strong>
-                      )}
-                      <span>{renderInlineFormattedText(item.text)}</span>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            );
-          }
-
           return (
             <ul key={bIdx} className="space-y-2.5 my-3 pl-0.5">
               {block.items.map((item, itemIdx) => (
-                <li key={itemIdx} className="flex items-start gap-2.5 text-xs sm:text-sm text-slate-700 leading-relaxed">
+                <li
+                  key={itemIdx}
+                  className="flex items-start gap-2.5 text-xs sm:text-sm text-slate-700 leading-relaxed"
+                >
                   <span className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-2 flex-shrink-0" />
                   <div className="flex-1">
-                    {item.label && (
-                      <strong className="font-bold text-slate-900 mr-1.5">
-                        {renderInlineFormattedText(item.label)}:
-                      </strong>
+                    {item.label ? (
+                      <>
+                        <strong className="font-bold text-slate-900 mr-1.5">
+                          {renderInlineFormattedText(item.label)}:
+                        </strong>
+                        {item.text ? (
+                          <span>{renderInlineFormattedText(item.text)}</span>
+                        ) : null}
+                      </>
+                    ) : (
+                      <span>{renderInlineFormattedText(item.text)}</span>
                     )}
-                    <span>{renderInlineFormattedText(item.text)}</span>
                   </div>
                 </li>
               ))}
