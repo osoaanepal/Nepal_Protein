@@ -143,6 +143,13 @@ export const ProductShortDescription = ({
           })}
         </div>
       </div>
+
+      {/* Optional Trailing Notes / Ambiguous Information */}
+      {parsed.fallbackText && (
+        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-600 leading-relaxed font-normal">
+          {renderInlineFormattedText(parsed.fallbackText)}
+        </div>
+      )}
     </div>
   );
 };

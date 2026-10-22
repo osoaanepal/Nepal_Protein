@@ -50,6 +50,24 @@ test('ProductShortDescription Component: Renders Ashwagandha concatenated string
   assert.ok(html.includes('text-emerald-700'), 'Vegetarian should have emerald badge');
 });
 
+test('ProductShortDescription Component: Renders exact Amazon tabbed single-line string as Key Specifications card', () => {
+  const amazonTabbed =
+    'Brand\tOSOAA Flavour\tAshwagandha Primary Supplement Type\tAshwagandha Net Quantity\t120.00 Count Item Form\tTablet Item Weight\t170 Grams Item dimensions L x W x H\t44 x 44 x 90 Millimeters Diet Type\tVegetarian Product Benefits\tBoosts Energy, Better Sleep, Anxiety & Stress Relief Age Range (Description)\tAdult';
+
+  const html = renderToStaticMarkup(
+    React.createElement(ProductShortDescription, { shortDescription: amazonTabbed })
+  );
+
+  assert.ok(html.includes('structured-mode'), 'Should have structured-mode class');
+  assert.ok(html.includes('Key Specifications'), 'Should have Key Specifications header');
+  assert.ok(html.includes('Brand'), 'Should render Brand label');
+  assert.ok(html.includes('OSOAA'), 'Should render OSOAA value');
+  assert.ok(html.includes('120.00 Count'), 'Should render Net Quantity');
+  assert.ok(html.includes('44 x 44 x 90 Millimeters'), 'Should render Dimensions value');
+  assert.ok(html.includes('Vegetarian'), 'Should render Vegetarian value');
+  assert.ok(html.includes('Adult'), 'Should render Adult value');
+});
+
 test('ProductShortDescription Component: Renders Ashwagandha written as normal prose', () => {
   const ashwagandhaProse =
     'Our authentic Himalayan Ashwagandha tablets provide standardized full-spectrum root extract to support healthy cortisol levels, deeper sleep, and natural stress relief.';

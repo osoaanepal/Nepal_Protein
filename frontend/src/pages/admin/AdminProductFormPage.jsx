@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2, Upload, AlertCircle, CheckCircle2, Image as ImageIcon, RefreshCw, X } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Upload, AlertCircle, CheckCircle2, Image as ImageIcon, RefreshCw, X, Sparkles } from 'lucide-react';
 import api from '../../services/api';
 import { ProductDescriptionEditor } from '../../components/admin/ProductDescriptionEditor';
+import { ProductShortDescription } from '../../components/product/ProductShortDescription';
 
 export const AdminProductFormPage = () => {
   const { id } = useParams();
@@ -415,17 +416,41 @@ export const AdminProductFormPage = () => {
             </div>
 
             <div className="sm:col-span-2">
-              <label className="text-xs font-bold text-white block mb-1">Short Description</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-bold text-white block">Short Description / Key Specifications</label>
+                {form.shortDescription && (
+                  <span className="text-[11px] text-orange-400 font-medium flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-orange-400" />
+                    Auto-formatted live preview active
+                  </span>
+                )}
+              </div>
               <textarea
                 rows={3}
                 value={form.shortDescription}
                 onChange={(e) => setForm({ ...form, shortDescription: e.target.value })}
-                placeholder="Enter a concise product summary or key specifications (e.g. Brand: OSOAA, Form: Tablet, Diet Type: Vegetarian)..."
-                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white focus:border-orange-500 focus:outline-none resize-y leading-relaxed"
+                placeholder="Paste specifications directly from Amazon, Excel, supplier sheets, HTML tables, or enter summary prose..."
+                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white focus:border-orange-500 focus:outline-none resize-y leading-relaxed font-mono"
               />
               <p className="text-[11px] text-slate-400 mt-1">
-                Supports short summary prose or key-value pairs (e.g. Brand: OSOAA, Net Quantity: 120 Count). Key-value pairs automatically format into a structured specifications card on the product page.
+                Paste directly from Amazon, Excel, supplier tables, bullet lists, or text. The system automatically converts specifications into Key Specifications cards on the live store.
               </p>
+
+              {form.shortDescription.trim() && (
+                <div className="mt-3 p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      Live Customer View Preview:
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-medium">
+                      (Rendered automatically from pasted text)
+                    </span>
+                  </div>
+                  <div className="bg-white p-3.5 rounded-xl border border-slate-200">
+                    <ProductShortDescription shortDescription={form.shortDescription} />
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="sm:col-span-2">
