@@ -42,7 +42,7 @@ app.set('trust proxy', 1);
 app.use(helmet(getSecurityHeaderOptions()));
 
 // NP-SEC-02: Strict CORS origin whitelist configuration
-const allowedOrigins = [
+const rawOrigins = [
   ENV.CLIENT_URL,
   ENV.SITE_URL,
   ...(ENV.NODE_ENV !== 'production'
@@ -54,6 +54,21 @@ const allowedOrigins = [
       ]
     : []),
 ].filter(Boolean);
+
+const allowedOrigins = Array.from(
+  new Set(
+    rawOrigins.flatMap((url) => {
+      const clean = url.trim().replace(/\/+$/, '');
+      const variants = [clean];
+      if (/^https?:\/\/nepalprotein\.com$/i.test(clean)) {
+        variants.push('https://www.nepalprotein.com');
+      } else if (/^https?:\/\/www\.nepalprotein\.com$/i.test(clean)) {
+        variants.push('https://nepalprotein.com');
+      }
+      return variants;
+    })
+  )
+);
 
 app.use(cors({
   origin: (origin, callback) => {

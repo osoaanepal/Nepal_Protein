@@ -92,6 +92,12 @@ assert(cookieOptions.sameSite === 'lax', 'Cookie option sameSite is set to "lax"
 assert(cookieOptions.path === '/', 'Cookie option path is set to "/" for sitewide API coverage');
 assert(typeof cookieOptions.maxAge === 'number' && cookieOptions.maxAge > 0, 'Cookie maxAge is a positive duration');
 
+const prodCookieOptions = authService.getCookieOptions('production');
+assert(prodCookieOptions.httpOnly === true, 'Production cookie option httpOnly is strictly true');
+assert(prodCookieOptions.secure === true, 'Production cookie option secure is strictly true');
+assert(prodCookieOptions.sameSite === 'none', 'Production cookie option sameSite is set to "none" for cross-site SPA authentication');
+assert(prodCookieOptions.partitioned === true, 'Production cookie option partitioned is true for CHIPS browser compatibility');
+
 // Check frontend api.js for X-Requested-With header
 const apiJsPath = path.resolve(__dirname, '../../../frontend/src/services/api.js');
 if (fs.existsSync(apiJsPath)) {

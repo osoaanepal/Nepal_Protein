@@ -16,7 +16,8 @@
     "test:security2": "node src/utils/testPhase2Security.js",
     "test:security3": "node src/utils/testPhase3Security.js",
     "test:security4": "node src/utils/testPhase4Security.js",
-    "test": "node src/utils/testSeoValidation.js && node src/utils/testPagination.js && node src/utils/testPhase1Security.js && node src/utils/testPhase2Security.js && node src/utils/testPhase3Security.js && node src/utils/testPhase4Security.js"
+    "test:auth": "node src/utils/testAuthRegression.js",
+    "test": "node src/utils/testSeoValidation.js && node src/utils/testPagination.js && node src/utils/testPhase1Security.js && node src/utils/testPhase2Security.js && node src/utils/testPhase3Security.js && node src/utils/testPhase4Security.js && node src/utils/testAuthRegression.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

@@ -19,15 +19,28 @@ export const authService = {
   /**
    * Get secure cookie options
    */
-  getCookieOptions: () => {
-    const isProduction = ENV.NODE_ENV === 'production';
-    return {
+  getCookieOptions: (nodeEnv = ENV.NODE_ENV) => {
+    const isProduction = nodeEnv === 'production';
+    const sameSiteEnv = process.env.COOKIE_SAME_SITE;
+    const sameSite = sameSiteEnv ? sameSiteEnv.toLowerCase() : (isProduction ? 'none' : 'lax');
+
+    const options = {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: 'lax', // Lax provides CSRF protection while permitting top-level gateway redirects
+      secure: isProduction || sameSite === 'none',
+      sameSite,
       maxAge: ENV.COOKIE_EXPIRES_IN_DAYS * 24 * 60 * 60 * 1000,
       path: '/',
     };
+
+    if (isProduction || sameSite === 'none') {
+      options.partitioned = true;
+    }
+
+    if (process.env.COOKIE_DOMAIN) {
+      options.domain = process.env.COOKIE_DOMAIN;
+    }
+
+    return options;
   },
 
   /**
