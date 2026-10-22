@@ -6,6 +6,132 @@ import { cloudinaryService } from '../services/cloudinary.service.js';
 import { getPaginationParams, buildPaginationMetadata } from '../utils/pagination.js';
 import { escapeRegex } from '../utils/security.js';
 
+/**
+ * Safely resolves and orders product images according to an optional manifest,
+ * uploaded files, and previously retained images.
+ * Guarantees that the first image (index 0) has isPrimary: true, and all others have isPrimary: false.
+ * Cleans up newly uploaded images if an error occurs.
+ */
+async function resolveProductGalleryImages({
+  imagesManifestRaw,
+  existingImagesRaw,
+  newImageFiles = [],
+  currentProductImages = [],
+}) {
+  const newlyUploaded = [];
+
+  try {
+    // 1. Upload any new image files received in this request
+    const uploadedByFileIndex = [];
+    if (newImageFiles && newImageFiles.length > 0) {
+      for (let i = 0; i < newImageFiles.length; i++) {
+        const file = newImageFiles[i];
+        const uploaded = await cloudinaryService.uploadImage(file.buffer, 'products');
+        uploadedByFileIndex.push(uploaded);
+        newlyUploaded.push(uploaded);
+      }
+    }
+
+    let finalImages = [];
+
+    // 2. Parse imagesManifest if provided
+    let manifest = null;
+    if (imagesManifestRaw !== undefined && imagesManifestRaw !== null && imagesManifestRaw !== '') {
+      manifest = typeof imagesManifestRaw === 'string'
+        ? JSON.parse(imagesManifestRaw)
+        : imagesManifestRaw;
+
+      if (!Array.isArray(manifest)) {
+        throw new Error('imagesManifest must be a valid JSON array');
+      }
+    }
+
+    if (manifest && manifest.length > 0) {
+      // Validate manifest entries and map according to specified order
+      let autoNewIndex = 0;
+      for (let i = 0; i < manifest.length; i++) {
+        const entry = manifest[i];
+        if (!entry || typeof entry !== 'object') {
+          throw new Error(`Invalid manifest item at index ${i}`);
+        }
+
+        if (entry.type === 'existing') {
+          if (!entry.url || typeof entry.url !== 'string') {
+            throw new Error(`Existing image in manifest at index ${i} is missing a valid URL`);
+          }
+          finalImages.push({
+            url: entry.url,
+            publicId: entry.publicId || '',
+            isPrimary: i === 0,
+          });
+        } else if (entry.type === 'new') {
+          const targetIndex = entry.fileIndex !== undefined ? Number(entry.fileIndex) : autoNewIndex++;
+          if (isNaN(targetIndex) || targetIndex < 0 || targetIndex >= uploadedByFileIndex.length) {
+            throw new Error(`Manifest references invalid image fileIndex ${entry.fileIndex}`);
+          }
+          const uploaded = uploadedByFileIndex[targetIndex];
+          if (!uploaded) {
+            throw new Error(`Missing uploaded file for manifest entry at index ${i}`);
+          }
+          finalImages.push({
+            url: uploaded.url,
+            publicId: uploaded.publicId || '',
+            isPrimary: i === 0,
+          });
+        } else {
+          throw new Error(`Unknown image type "${entry.type}" in manifest at index ${i}`);
+        }
+      }
+    } else {
+      // Fallback / legacy path:
+      let retained = [];
+      if (existingImagesRaw !== undefined) {
+        retained = typeof existingImagesRaw === 'string'
+          ? JSON.parse(existingImagesRaw)
+          : existingImagesRaw;
+        if (!Array.isArray(retained)) {
+          retained = [];
+        }
+      } else {
+        retained = currentProductImages || [];
+      }
+
+      finalImages = [
+        ...retained.map((img) => ({
+          url: img.url,
+          publicId: img.publicId || '',
+          isPrimary: false,
+        })),
+        ...newlyUploaded.map((img) => ({
+          url: img.url,
+          publicId: img.publicId || '',
+          isPrimary: false,
+        })),
+      ];
+    }
+
+    // Ensure isPrimary is strictly true ONLY for index 0 (if images exist)
+    finalImages = finalImages.map((img, idx) => ({
+      url: img.url,
+      publicId: img.publicId || '',
+      isPrimary: idx === 0,
+    }));
+
+    return {
+      finalImages,
+      newlyUploaded,
+    };
+  } catch (err) {
+    // Cleanup any newly uploaded Cloudinary images to prevent orphans on failure
+    for (const up of newlyUploaded) {
+      if (up.publicId) {
+        await cloudinaryService.deleteImage(up.publicId).catch(() => {});
+      }
+    }
+    throw err;
+  }
+}
+
 export const productService = {
   /**
    * Search and filter products with pagination and aggregation
@@ -133,18 +259,13 @@ export const productService = {
       slug = `${slug}-${Date.now().toString().slice(-4)}`;
     }
 
-    // Upload images
-    const images = [];
-    if (imageFiles && imageFiles.length > 0) {
-      for (let i = 0; i < imageFiles.length; i++) {
-        const uploaded = await cloudinaryService.uploadImage(imageFiles[i].buffer, 'products');
-        images.push({
-          url: uploaded.url,
-          publicId: uploaded.publicId,
-          isPrimary: i === 0,
-        });
-      }
-    }
+    // Resolve images safely with manifest and upload handling
+    const { finalImages, newlyUploaded } = await resolveProductGalleryImages({
+      imagesManifestRaw: productData.imagesManifest,
+      existingImagesRaw: productData.existingImages,
+      newImageFiles: imageFiles,
+      currentProductImages: [],
+    });
 
     // Parse JSON fields if stringified from multipart form
     const parsedVariants = typeof productData.variants === 'string' ? JSON.parse(productData.variants) : (productData.variants || []);
@@ -159,18 +280,27 @@ export const productService = {
       if (bDoc) brandId = bDoc._id;
     }
 
-    const product = await Product.create({
-      ...productData,
-      brand: brandId,
-      slug,
-      images,
-      variants: parsedVariants,
-      ingredients: parsedIngredients,
-      nutritionInformation: parsedNutrition,
-      tags: parsedTags.map(t => t.toLowerCase().trim()),
-    });
+    try {
+      const product = await Product.create({
+        ...productData,
+        brand: brandId,
+        slug,
+        images: finalImages,
+        variants: parsedVariants,
+        ingredients: parsedIngredients,
+        nutritionInformation: parsedNutrition,
+        tags: parsedTags.map(t => t.toLowerCase().trim()),
+      });
 
-    return product;
+      return product;
+    } catch (saveErr) {
+      for (const up of newlyUploaded) {
+        if (up.publicId) {
+          await cloudinaryService.deleteImage(up.publicId).catch(() => {});
+        }
+      }
+      throw saveErr;
+    }
   },
 
   /**
@@ -180,6 +310,11 @@ export const productService = {
     const product = await Product.findById(id);
     if (!product) throw new Error('Product not found');
 
+    const originalImages = [...(product.images || []).map((img) => ({
+      url: img.url,
+      publicId: img.publicId || '',
+    }))];
+
     if (updateData.name && updateData.name !== product.name) {
       let slug = slugify(updateData.name, { lower: true, strict: true });
       const existingSlug = await Product.findOne({ slug, _id: { $ne: id } });
@@ -188,22 +323,22 @@ export const productService = {
       product.slug = slug;
     }
 
-    // Handle uploaded new images
-    if (newImageFiles && newImageFiles.length > 0) {
-      for (const file of newImageFiles) {
-        const uploaded = await cloudinaryService.uploadImage(file.buffer, 'products');
-        product.images.push({
-          url: uploaded.url,
-          publicId: uploaded.publicId,
-          isPrimary: product.images.length === 0,
-        });
-      }
-    }
+    // Resolve gallery images
+    let newlyUploaded = [];
+    const hasImageUpdates =
+      updateData.imagesManifest !== undefined ||
+      updateData.existingImages !== undefined ||
+      (newImageFiles && newImageFiles.length > 0);
 
-    // Handle existing images / deleted images if provided
-    if (updateData.existingImages) {
-      const retainedImages = typeof updateData.existingImages === 'string' ? JSON.parse(updateData.existingImages) : updateData.existingImages;
-      product.images = retainedImages;
+    if (hasImageUpdates) {
+      const resolved = await resolveProductGalleryImages({
+        imagesManifestRaw: updateData.imagesManifest,
+        existingImagesRaw: updateData.existingImages,
+        newImageFiles,
+        currentProductImages: product.images,
+      });
+      product.images = resolved.finalImages;
+      newlyUploaded = resolved.newlyUploaded;
     }
 
     if (updateData.sku) product.sku = updateData.sku;
@@ -248,7 +383,42 @@ export const productService = {
       product.tags = tags.map(t => t.toLowerCase().trim());
     }
 
-    await product.save();
+    try {
+      await product.save();
+    } catch (saveErr) {
+      // Rollback newly uploaded images from Cloudinary
+      for (const up of newlyUploaded) {
+        if (up.publicId) {
+          await cloudinaryService.deleteImage(up.publicId).catch(() => {});
+        }
+      }
+      throw saveErr;
+    }
+
+    // If save succeeded and images were updated, delete only images that were genuinely removed
+    if (hasImageUpdates) {
+      const retainedPublicIds = new Set(
+        product.images.map((img) => img.publicId).filter(Boolean)
+      );
+      const retainedUrls = new Set(
+        product.images.map((img) => img.url).filter(Boolean)
+      );
+
+      for (const oldImg of originalImages) {
+        const isRetained =
+          (oldImg.publicId && retainedPublicIds.has(oldImg.publicId)) ||
+          (oldImg.url && retainedUrls.has(oldImg.url));
+
+        if (!isRetained && oldImg.publicId) {
+          try {
+            await cloudinaryService.deleteImage(oldImg.publicId);
+          } catch (delErr) {
+            console.warn(`[Cloudinary Cleanup] Failed to delete removed image ${oldImg.publicId}:`, delErr.message);
+          }
+        }
+      }
+    }
+
     return product;
   },
 

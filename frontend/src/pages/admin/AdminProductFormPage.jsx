@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2, Upload, AlertCircle, CheckCircle2, Image as ImageIcon, RefreshCw, X, Sparkles } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Upload, AlertCircle, CheckCircle2, Image as ImageIcon, RefreshCw, X, Sparkles, GripVertical, ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import api from '../../services/api';
 import { ProductDescriptionEditor } from '../../components/admin/ProductDescriptionEditor';
 import { ProductShortDescription } from '../../components/product/ProductShortDescription';
@@ -41,10 +41,12 @@ export const AdminProductFormPage = () => {
 
   const [variants, setVariants] = useState([]);
   const [nutrition, setNutrition] = useState([]);
-  const [newImages, setNewImages] = useState([]);
-  const [existingImages, setExistingImages] = useState([]);
+  const [galleryImages, setGalleryImages] = useState([]);
   const [imageError, setImageError] = useState('');
-  const [brokenExistingImages, setBrokenExistingImages] = useState({});
+  const [brokenImages, setBrokenImages] = useState({});
+  const [draggedIndex, setDraggedIndex] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
   const activeUrlsRef = useRef(new Set());
 
   useEffect(() => {
@@ -83,7 +85,20 @@ export const AdminProductFormPage = () => {
           });
           setVariants(p.variants || []);
           setNutrition(p.nutritionInformation || []);
-          setExistingImages(p.images || []);
+          if (p.images && Array.isArray(p.images)) {
+            setGalleryImages(
+              p.images.map((img, idx) => ({
+                id: `existing-${idx}-${img.publicId || Math.random().toString(36).substring(2, 7)}`,
+                type: 'existing',
+                url: img.url,
+                publicId: img.publicId || '',
+                isPrimary: idx === 0,
+                hasError: false,
+              }))
+            );
+          } else {
+            setGalleryImages([]);
+          }
         }
       } catch (err) {
         setError('Failed to fetch product data');
@@ -172,56 +187,60 @@ export const AdminProductFormPage = () => {
     return validFiles;
   };
 
-  const handleImageChange = (e) => {
-    const files = e.target.files;
+  const addFilesToGallery = (files) => {
     if (!files || files.length === 0) return;
-
     const validFiles = validateAndProcessFiles(files);
     if (validFiles.length > 0) {
       const newItems = validFiles.map((file) => ({
-        id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        id: `new-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        type: 'new',
         file,
         url: createPreviewUrl(file),
         name: file.name,
         size: file.size,
         hasError: false,
       }));
-      setNewImages((prev) => [...prev, ...newItems]);
+      setGalleryImages((prev) => [...prev, ...newItems]);
     }
+  };
 
+  const handleImageChange = (e) => {
+    addFilesToGallery(e.target.files);
     e.target.value = '';
   };
 
-  const handleRemoveNewImage = (index) => {
-    setNewImages((prev) => {
+  const handleRemoveImage = (index) => {
+    setGalleryImages((prev) => {
       const itemToRemove = prev[index];
-      if (itemToRemove?.url) {
+      if (itemToRemove?.type === 'new' && itemToRemove?.url) {
         revokePreviewUrl(itemToRemove.url);
       }
       return prev.filter((_, idx) => idx !== index);
     });
   };
 
-  const handleReplaceNewImage = (index, e) => {
+  const handleReplaceImage = (index, e) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     const file = files[0];
     const validFiles = validateAndProcessFiles([file]);
     if (validFiles.length > 0) {
-      setNewImages((prev) => {
+      const validFile = validFiles[0];
+      setGalleryImages((prev) => {
         const oldItem = prev[index];
-        if (oldItem?.url) {
+        if (oldItem?.type === 'new' && oldItem?.url) {
           revokePreviewUrl(oldItem.url);
         }
-        const newUrl = createPreviewUrl(file);
+        const newUrl = createPreviewUrl(validFile);
         return prev.map((item, idx) =>
           idx === index
             ? {
-                ...item,
-                file,
+                id: `replaced-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+                type: 'new',
+                file: validFile,
                 url: newUrl,
-                name: file.name,
-                size: file.size,
+                name: validFile.name,
+                size: validFile.size,
                 hasError: false,
               }
             : item
@@ -231,41 +250,75 @@ export const AdminProductFormPage = () => {
     e.target.value = '';
   };
 
-  const handleRemoveExistingImage = (index) => {
-    setExistingImages((prev) => prev.filter((_, idx) => idx !== index));
-  };
-
-  const handleReplaceExistingImage = (index, e) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    const file = files[0];
-    const validFiles = validateAndProcessFiles([file]);
-    if (validFiles.length > 0) {
-      setExistingImages((prev) => prev.filter((_, idx) => idx !== index));
-      const newUrl = createPreviewUrl(file);
-      setNewImages((prev) => [
-        ...prev,
-        {
-          id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-          file,
-          url: newUrl,
-          name: file.name,
-          size: file.size,
-          hasError: false,
-        },
-      ]);
+  const handleMoveImage = (fromIndex, toIndex) => {
+    if (
+      fromIndex < 0 ||
+      fromIndex >= galleryImages.length ||
+      toIndex < 0 ||
+      toIndex >= galleryImages.length ||
+      fromIndex === toIndex
+    ) {
+      return;
     }
-    e.target.value = '';
+    setGalleryImages((prev) => {
+      const updated = [...prev];
+      const [moved] = updated.splice(fromIndex, 1);
+      updated.splice(toIndex, 0, moved);
+      return updated;
+    });
   };
 
-  const handleNewPreviewError = (index) => {
-    setNewImages((prev) =>
-      prev.map((item, idx) => (idx === index ? { ...item, hasError: true } : item))
-    );
+  const handleMakePrimary = (index) => {
+    if (index === 0) return;
+    handleMoveImage(index, 0);
   };
 
-  const handleExistingPreviewError = (idx) => {
-    setBrokenExistingImages((prev) => ({ ...prev, [idx]: true }));
+  const handleDragStart = (e, index) => {
+    if (e.target.closest('button, label, input')) {
+      e.preventDefault();
+      return;
+    }
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    try {
+      e.dataTransfer.setData('text/plain', String(index));
+    } catch (_) {}
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverIndex !== index) {
+      setDragOverIndex(index);
+    }
+  };
+
+  const handleDrop = (e, targetIndex) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === undefined || draggedIndex === targetIndex) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    setGalleryImages((prev) => {
+      const updated = [...prev];
+      const [moved] = updated.splice(draggedIndex, 1);
+      updated.splice(targetIndex, 0, moved);
+      return updated;
+    });
+
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handlePreviewError = (id) => {
+    setBrokenImages((prev) => ({ ...prev, [id]: true }));
   };
 
   const handleSubmit = async (e) => {
@@ -289,9 +342,44 @@ export const AdminProductFormPage = () => {
 
       formData.append('variants', JSON.stringify(variants));
       formData.append('nutritionInformation', JSON.stringify(nutrition));
-      formData.append('existingImages', JSON.stringify(existingImages));
 
-      newImages.forEach(({ file }) => {
+      // Build structured images manifest preserving exact user-defined order
+      const imagesManifest = [];
+      const newFilesToUpload = [];
+
+      galleryImages.forEach((img) => {
+        if (img.type === 'existing') {
+          imagesManifest.push({
+            type: 'existing',
+            url: img.url,
+            publicId: img.publicId || '',
+          });
+        } else if (img.type === 'new') {
+          const fileIndex = newFilesToUpload.length;
+          newFilesToUpload.push(img.file);
+          imagesManifest.push({
+            type: 'new',
+            fileIndex,
+            tempId: img.id,
+            name: img.name || img.file?.name,
+          });
+        }
+      });
+
+      formData.append('imagesManifest', JSON.stringify(imagesManifest));
+
+      // Backward compatibility: provide legacy existingImages
+      const legacyExisting = galleryImages
+        .filter((img) => img.type === 'existing')
+        .map((img) => ({
+          url: img.url,
+          publicId: img.publicId || '',
+          isPrimary: false,
+        }));
+      formData.append('existingImages', JSON.stringify(legacyExisting));
+
+      // Append staged files in the exact order indexed in imagesManifest
+      newFilesToUpload.forEach((file) => {
         formData.append('images', file);
       });
 
@@ -522,11 +610,16 @@ export const AdminProductFormPage = () => {
 
         {/* Product Images (Cloudinary) */}
         <div className="p-4 sm:p-6 bg-slate-900 border border-slate-800 rounded-3xl space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xs font-bold text-orange-400 uppercase tracking-wider">3. Images (Cloudinary)</h2>
-            {(existingImages.length > 0 || newImages.length > 0) && (
-              <span className="text-[11px] font-medium text-slate-400">
-                {existingImages.length + newImages.length} image{existingImages.length + newImages.length !== 1 ? 's' : ''} total
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+            <div>
+              <h2 className="text-xs font-bold text-orange-400 uppercase tracking-wider">3. Product Images & Gallery Order</h2>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Drag cards to reorder or use ◀ ▶ buttons. Image #1 is automatically used as the primary cover photo.
+              </p>
+            </div>
+            {galleryImages.length > 0 && (
+              <span className="text-[11px] font-medium text-slate-400 self-start sm:self-auto">
+                {galleryImages.length} image{galleryImages.length !== 1 ? 's' : ''} total
               </span>
             )}
           </div>
@@ -549,31 +642,46 @@ export const AdminProductFormPage = () => {
           )}
 
           {/* Sensible placeholder when no images are present */}
-          {existingImages.length === 0 && newImages.length === 0 && (
+          {galleryImages.length === 0 && (
             <div className="flex flex-col items-center justify-center p-8 rounded-2xl bg-slate-950/40 border border-dashed border-slate-800 text-center">
               <div className="w-12 h-12 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500 mb-2.5">
                 <ImageIcon className="w-6 h-6 text-slate-400" />
               </div>
               <p className="text-xs font-bold text-slate-200">No product image selected</p>
               <p className="text-[11px] text-slate-400 mt-0.5 max-w-xs">
-                Select one or more images from your device. The first image will be set as the main cover photo.
+                Select or drag one or more images from your device. You can freely reorder them after selection.
               </p>
             </div>
           )}
 
-          {/* Image Previews Gallery */}
-          {(existingImages.length > 0 || newImages.length > 0) && (
-            <div className="flex flex-wrap gap-3">
-              {/* Existing Images from Cloudinary */}
-              {existingImages.map((img, idx) => {
+          {/* Unified Draggable Image Previews Gallery */}
+          {galleryImages.length > 0 && (
+            <div className="flex flex-wrap gap-3.5 pt-1">
+              {galleryImages.map((item, idx) => {
                 const isPrimary = idx === 0;
-                const isBroken = Boolean(brokenExistingImages[idx]);
+                const isBroken = Boolean(brokenImages[item.id]);
+                const isBeingDragged = draggedIndex === idx;
+                const isDropTarget = dragOverIndex === idx && draggedIndex !== idx;
 
                 return (
                   <div
-                    key={`existing-${idx}`}
-                    className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 shrink-0 group hover:border-slate-700 transition"
+                    key={item.id}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, idx)}
+                    onDragOver={(e) => handleDragOver(e, idx)}
+                    onDrop={(e) => handleDrop(e, idx)}
+                    onDragEnd={handleDragEnd}
+                    className={`relative w-36 h-40 sm:w-40 sm:h-44 rounded-2xl overflow-hidden bg-slate-950 border shrink-0 group transition-all duration-150 select-none ${
+                      isBeingDragged
+                        ? 'opacity-30 scale-95 border-dashed border-orange-500 ring-2 ring-orange-500/50'
+                        : isDropTarget
+                        ? 'border-orange-500 ring-2 ring-orange-500 shadow-xl shadow-orange-500/30 scale-105 z-20'
+                        : isPrimary
+                        ? 'border-orange-500/80 ring-1 ring-orange-500/30'
+                        : 'border-slate-800 hover:border-slate-700'
+                    }`}
                   >
+                    {/* Background Preview */}
                     {isBroken ? (
                       <div className="w-full h-full flex flex-col items-center justify-center p-2 text-center text-rose-400">
                         <AlertCircle className="w-5 h-5 mb-1" />
@@ -581,27 +689,36 @@ export const AdminProductFormPage = () => {
                       </div>
                     ) : (
                       <img
-                        src={img.url}
-                        alt={`Product existing ${idx + 1}`}
-                        onError={() => handleExistingPreviewError(idx)}
-                        className="w-full h-full object-cover"
+                        src={item.url}
+                        alt={item.name || `Product image ${idx + 1}`}
+                        onError={() => handlePreviewError(item.id)}
+                        className="w-full h-full object-cover pointer-events-none"
                       />
                     )}
 
-                    {/* Top Left: Primary badge */}
-                    {isPrimary && (
-                      <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-orange-500 text-white shadow">
-                        Primary
+                    {/* Gradient overlays for readability */}
+                    <div className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-slate-950/80 via-slate-950/40 to-transparent pointer-events-none" />
+                    <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-slate-950/90 via-slate-950/50 to-transparent pointer-events-none" />
+
+                    {/* Top Left: Primary badge or numeric index */}
+                    {isPrimary ? (
+                      <span className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-md text-[9px] font-black bg-orange-500 text-white shadow flex items-center gap-1 z-10">
+                        <Star className="w-2.5 h-2.5 fill-current" /> Cover
+                      </span>
+                    ) : (
+                      <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-slate-900/90 text-slate-300 border border-slate-700/60 backdrop-blur-sm z-10">
+                        #{idx + 1}
                       </span>
                     )}
 
-                    {/* Bottom Left: Cloud status badge */}
-                    <span className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-slate-900/90 text-slate-300 border border-slate-700/60 backdrop-blur-sm">
-                      Saved
-                    </span>
-
-                    {/* Top Right: Actions (Replace & Delete) */}
-                    <div className="absolute top-1.5 right-1.5 flex items-center gap-1">
+                    {/* Top Right: Drag Handle, Replace, and Delete */}
+                    <div className="absolute top-1.5 right-1.5 flex items-center gap-1 z-10">
+                      <div
+                        title="Drag to reorder"
+                        className="cursor-grab active:cursor-grabbing p-1.5 bg-slate-900/90 hover:bg-orange-500 text-slate-300 hover:text-white rounded-lg transition shadow-lg backdrop-blur-sm"
+                      >
+                        <GripVertical className="w-3 h-3" />
+                      </div>
                       <label
                         className="p-1.5 bg-slate-900/90 hover:bg-orange-500 text-slate-300 hover:text-white rounded-lg transition cursor-pointer shadow-lg backdrop-blur-sm"
                         title="Replace this image"
@@ -610,90 +727,67 @@ export const AdminProductFormPage = () => {
                         <input
                           type="file"
                           accept="image/*"
-                          onChange={(e) => handleReplaceExistingImage(idx, e)}
+                          onChange={(e) => handleReplaceImage(idx, e)}
                           className="hidden"
                         />
                       </label>
                       <button
                         type="button"
-                        onClick={() => handleRemoveExistingImage(idx)}
+                        onClick={() => handleRemoveImage(idx)}
                         className="p-1.5 bg-slate-900/90 hover:bg-rose-500 text-slate-300 hover:text-white rounded-lg transition shadow-lg backdrop-blur-sm"
                         title="Remove image"
                       >
                         <Trash2 className="w-3 h-3" />
                       </button>
                     </div>
-                  </div>
-                );
-              })}
 
-              {/* Newly Selected Local Images */}
-              {newImages.map((item, idx) => {
-                const isPrimary = existingImages.length === 0 && idx === 0;
+                    {/* Bottom Left: Status badge */}
+                    <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1 z-10">
+                      {item.type === 'existing' ? (
+                        <span className="px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-slate-900/90 text-slate-300 border border-slate-700/60 backdrop-blur-sm">
+                          Saved
+                        </span>
+                      ) : (
+                        <span className="px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-slate-900/90 text-orange-400 border border-orange-500/30 backdrop-blur-sm">
+                          New
+                        </span>
+                      )}
+                      {item.size && (
+                        <span className="hidden sm:inline-block px-1 py-0.5 rounded text-[8px] font-mono font-medium bg-slate-900/80 text-slate-400 backdrop-blur-sm">
+                          {(item.size / 1024).toFixed(0)}K
+                        </span>
+                      )}
+                    </div>
 
-                return (
-                  <div
-                    key={item.id}
-                    className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 shrink-0 group hover:border-orange-500/50 transition ring-1 ring-orange-500/20"
-                  >
-                    {item.hasError ? (
-                      <div className="w-full h-full flex flex-col items-center justify-center p-2 text-center text-rose-400">
-                        <AlertCircle className="w-5 h-5 mb-1" />
-                        <span className="text-[10px] font-semibold">Preview Failed</span>
-                      </div>
-                    ) : (
-                      <img
-                        src={item.url}
-                        alt={item.name || `New preview ${idx + 1}`}
-                        onError={() => handleNewPreviewError(idx)}
-                        className="w-full h-full object-cover"
-                      />
-                    )}
-
-                    {/* Top Left: Primary badge */}
-                    {isPrimary ? (
-                      <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-orange-500 text-white shadow">
-                        Primary
-                      </span>
-                    ) : (
-                      <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-slate-900/90 text-slate-300 border border-slate-700/60 backdrop-blur-sm">
-                        #{existingImages.length + idx + 1}
-                      </span>
-                    )}
-
-                    {/* Bottom Left: New status badge */}
-                    <span className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-slate-900/90 text-orange-400 border border-orange-500/30 backdrop-blur-sm">
-                      New
-                    </span>
-
-                    {/* Bottom Right: File size */}
-                    {item.size && (
-                      <span className="absolute bottom-1.5 right-1.5 px-1 py-0.5 rounded text-[8px] font-mono font-medium bg-slate-900/80 text-slate-400 backdrop-blur-sm">
-                        {(item.size / 1024).toFixed(0)} KB
-                      </span>
-                    )}
-
-                    {/* Top Right: Actions (Replace & Delete) */}
-                    <div className="absolute top-1.5 right-1.5 flex items-center gap-1">
-                      <label
-                        className="p-1.5 bg-slate-900/90 hover:bg-orange-500 text-slate-300 hover:text-white rounded-lg transition cursor-pointer shadow-lg backdrop-blur-sm"
-                        title="Replace this image"
-                      >
-                        <RefreshCw className="w-3 h-3" />
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleReplaceNewImage(idx, e)}
-                          className="hidden"
-                        />
-                      </label>
+                    {/* Bottom Right: Accessible Reorder Nudge Controls */}
+                    <div className="absolute bottom-1.5 right-1.5 flex items-center gap-0.5 bg-slate-900/95 border border-slate-700/60 rounded-lg p-0.5 shadow-lg backdrop-blur-sm z-10">
                       <button
                         type="button"
-                        onClick={() => handleRemoveNewImage(idx)}
-                        className="p-1.5 bg-slate-900/90 hover:bg-rose-500 text-slate-300 hover:text-white rounded-lg transition shadow-lg backdrop-blur-sm"
-                        title="Remove image"
+                        disabled={idx === 0}
+                        onClick={() => handleMoveImage(idx, idx - 1)}
+                        className="p-1 rounded text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-20 disabled:hover:bg-transparent transition"
+                        title="Move left (earlier in gallery)"
                       >
-                        <Trash2 className="w-3 h-3" />
+                        <ChevronLeft className="w-3 h-3" />
+                      </button>
+                      {!isPrimary && (
+                        <button
+                          type="button"
+                          onClick={() => handleMakePrimary(idx)}
+                          className="p-1 rounded text-amber-400 hover:text-white hover:bg-orange-500 transition"
+                          title="Make primary cover"
+                        >
+                          <Star className="w-3 h-3" />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        disabled={idx === galleryImages.length - 1}
+                        onClick={() => handleMoveImage(idx, idx + 1)}
+                        className="p-1 rounded text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-20 disabled:hover:bg-transparent transition"
+                        title="Move right (later in gallery)"
+                      >
+                        <ChevronRight className="w-3 h-3" />
                       </button>
                     </div>
                   </div>
@@ -702,12 +796,32 @@ export const AdminProductFormPage = () => {
             </div>
           )}
 
-          {/* Upload Dropzone */}
+          {/* Upload Dropzone (Supports File Drag & Drop) */}
           <div>
-            <label className="block p-5 sm:p-6 border-2 border-dashed border-slate-700 hover:border-orange-500 rounded-2xl text-center cursor-pointer transition bg-slate-950/30">
+            <label
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDraggingFile(true);
+              }}
+              onDragLeave={() => setIsDraggingFile(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsDraggingFile(false);
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                  addFilesToGallery(e.dataTransfer.files);
+                }
+              }}
+              className={`block p-5 sm:p-6 border-2 border-dashed rounded-2xl text-center cursor-pointer transition ${
+                isDraggingFile
+                  ? 'border-orange-500 bg-orange-500/10 ring-2 ring-orange-500/30'
+                  : 'border-slate-700 hover:border-orange-500 bg-slate-950/30'
+              }`}
+            >
               <Upload className="w-6 h-6 text-orange-400 mx-auto mb-2" />
               <span className="text-xs font-bold text-white">
-                {existingImages.length + newImages.length > 0 ? 'Click to select additional images' : 'Click to select product images'}
+                {galleryImages.length > 0
+                  ? 'Click or drag files here to add additional images'
+                  : 'Click or drag product images here to upload'}
               </span>
               <p className="text-[10px] text-slate-400 mt-1">JPG, PNG, WEBP up to 5MB each (multiple files supported)</p>
               <input
@@ -718,10 +832,13 @@ export const AdminProductFormPage = () => {
                 className="hidden"
               />
             </label>
-            {newImages.length > 0 && (
+            {galleryImages.some((img) => img.type === 'new') && (
               <div className="flex items-center gap-2 text-xs text-orange-400 mt-2">
                 <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                <span>{newImages.length} new image{newImages.length !== 1 ? 's' : ''} staged for upload</span>
+                <span>
+                  {galleryImages.filter((img) => img.type === 'new').length} new image
+                  {galleryImages.filter((img) => img.type === 'new').length !== 1 ? 's' : ''} staged for upload
+                </span>
               </div>
             )}
           </div>
