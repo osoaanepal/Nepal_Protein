@@ -3,12 +3,11 @@ import api from '../services/api';
 
 export const useAuthStore = create((set, get) => ({
   user: null,
-  token: localStorage.getItem('osoaa_token') || null,
   isLoading: true,
   isCheckingAuth: false,
   error: null,
 
-  // Check current session on app boot
+  // Check current session on app boot via httpOnly cookie
   checkAuth: async () => {
     if (get().isCheckingAuth) return;
     set({ isCheckingAuth: true, isLoading: true, error: null });
@@ -16,21 +15,17 @@ export const useAuthStore = create((set, get) => ({
       const response = await api.get('/auth/me');
       set({ user: response.data.user, isLoading: false, isCheckingAuth: false });
     } catch (err) {
-      set({ user: null, token: null, isLoading: false, isCheckingAuth: false });
-      localStorage.removeItem('osoaa_token');
+      set({ user: null, isLoading: false, isCheckingAuth: false });
     }
   },
 
-  // Login
+  // Login: backend automatically sets secure httpOnly cookie
   login: async (email, password) => {
     set({ isLoading: true, error: null });
     try {
       const response = await api.post('/auth/login', { email, password });
-      const { user, token } = response.data;
-      if (token) {
-        localStorage.setItem('osoaa_token', token);
-      }
-      set({ user, token, isLoading: false, error: null });
+      const { user } = response.data;
+      set({ user, isLoading: false, error: null });
       return { success: true, user };
     } catch (err) {
       set({ isLoading: false, error: err.customMessage });
@@ -56,16 +51,13 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  // Verify OTP
+  // Verify OTP: backend automatically sets secure httpOnly cookie
   verifyOtp: async (email, otp) => {
     set({ isLoading: true, error: null });
     try {
       const response = await api.post('/auth/verify-otp', { email, otp });
-      const { user, token } = response.data;
-      if (token) {
-        localStorage.setItem('osoaa_token', token);
-      }
-      set({ user, token, isLoading: false });
+      const { user } = response.data;
+      set({ user, isLoading: false });
       return { success: true, message: response.data.message, user };
     } catch (err) {
       set({ isLoading: false, error: err.customMessage });
@@ -109,15 +101,14 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  // Logout
+  // Logout: clears httpOnly cookie via backend endpoint
   logout: async () => {
     try {
       await api.post('/auth/logout');
     } catch (err) {
       // Ignore
     } finally {
-      localStorage.removeItem('osoaa_token');
-      set({ user: null, token: null });
+      set({ user: null });
     }
   },
 

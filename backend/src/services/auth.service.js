@@ -24,8 +24,9 @@ export const authService = {
     return {
       httpOnly: true,
       secure: isProduction,
-      sameSite: isProduction ? 'strict' : 'lax',
+      sameSite: 'lax', // Lax provides CSRF protection while permitting top-level gateway redirects
       maxAge: ENV.COOKIE_EXPIRES_IN_DAYS * 24 * 60 * 60 * 1000,
+      path: '/',
     };
   },
 

@@ -62,13 +62,72 @@ export const couponService = {
   },
 
   /**
-   * Record coupon redemption
+   * Record coupon redemption atomically
+   * NP-SEC-16: Enforce usageLimit atomically under concurrent requests
    */
   recordUsage: async (couponId, userId) => {
+    if (!couponId) return null;
+
+    const coupon = await Coupon.findById(couponId);
+    if (!coupon || !coupon.isActive) {
+      throw new Error('This coupon is no longer active.');
+    }
+
+    const now = new Date();
+    if (coupon.endDate && coupon.endDate < now) {
+      throw new Error('This coupon code has expired.');
+    }
+
+    if (userId && coupon.perUserLimit > 0) {
+      const userUsage = coupon.usedBy.filter(u => u.user && u.user.toString() === userId.toString()).length;
+      if (userUsage >= coupon.perUserLimit) {
+        throw new Error('You have already redeemed this coupon the maximum allowed times.');
+      }
+    }
+
+    // Atomic conditional increment: if usageLimit > 0, usedCount must be strictly < usageLimit
+    const filter = {
+      _id: couponId,
+      isActive: true,
+    };
+    if (coupon.usageLimit > 0) {
+      filter.usedCount = { $lt: coupon.usageLimit };
+    }
+
+    const updatedCoupon = await Coupon.findOneAndUpdate(
+      filter,
+      {
+        $inc: { usedCount: 1 },
+        $push: { usedBy: { user: userId, usedAt: new Date() } },
+      },
+      { new: true }
+    );
+
+    if (!updatedCoupon) {
+      throw new Error('This coupon code has reached its maximum usage limit.');
+    }
+
+    return updatedCoupon;
+  },
+
+  /**
+   * Compensating rollback or cancellation of coupon usage
+   * NP-SEC-16: Release coupon usage on order creation failure or order cancellation
+   */
+  releaseUsage: async (couponId, userId) => {
     if (!couponId) return;
-    await Coupon.findByIdAndUpdate(couponId, {
-      $inc: { usedCount: 1 },
-      $push: { usedBy: { user: userId, usedAt: new Date() } }
-    });
+    try {
+      const filter = {
+        _id: couponId,
+        usedCount: { $gt: 0 },
+      };
+      const update = {
+        $inc: { usedCount: -1 },
+        ...(userId ? { $pull: { usedBy: { user: userId } } } : {}),
+      };
+      await Coupon.findOneAndUpdate(filter, update);
+    } catch (err) {
+      console.error('Failed to release coupon usage:', err.message);
+    }
   }
 };

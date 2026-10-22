@@ -1,11 +1,17 @@
 import cloudinary from '../config/cloudinary.js';
 import { ENV } from '../config/env.js';
+import { isValidImageBuffer } from '../utils/security.js';
 
 export const cloudinaryService = {
   /**
    * Upload buffer directly to Cloudinary
+   * NP-SEC-08: Validate image signature before upload
    */
   uploadImage: async (fileBuffer, folder = 'osoaa_products') => {
+    if (!fileBuffer || !isValidImageBuffer(fileBuffer)) {
+      throw new Error('Unsupported image format. Only authentic JPEG, PNG, and WebP images are allowed.');
+    }
+
     // If credentials are configured, use Cloudinary
     if (ENV.CLOUDINARY.CLOUD_NAME && ENV.CLOUDINARY.API_KEY && ENV.CLOUDINARY.API_SECRET) {
       return new Promise((resolve, reject) => {

@@ -18,7 +18,6 @@ export const initiateEsewa = async (req, res, next) => {
 
     const payload = await paymentService.createEsewaPaymentPayload({
       order,
-      clientCallbackUrl: req.headers.origin,
     });
 
     res.status(200).json({ success: true, data: payload });
@@ -79,35 +78,116 @@ export const verifyEsewa = async (req, res, next) => {
       });
     }
 
-    // Update order status if not already paid (idempotency check)
-    if (order.paymentInfo.status !== 'PAID') {
-      order.paymentInfo.status = 'PAID';
-      order.paymentInfo.transactionId = transactionId;
-      order.paymentInfo.transactionUuid = transactionUuid;
-      order.paymentInfo.paidAt = new Date();
-      order.orderStatus = 'CONFIRMED';
-      order.orderTimeline.push({
-        status: 'CONFIRMED',
-        note: `Payment verified via eSewa (Ref: ${transactionId})`,
-        updatedAt: new Date(),
+    // NP-SEC-03: Prevent duplicate transaction IDs across different orders
+    const existingTxOrder = await Order.findOne({
+      _id: { $ne: order._id },
+      'paymentInfo.transactionId': transactionId,
+    });
+    if (existingTxOrder) {
+      return res.status(400).json({
+        success: false,
+        message: `Duplicate transaction ID detected. Transaction ${transactionId} has already been recorded for another order.`,
+        orderId: order._id,
+        orderNumber: order.orderNumber,
       });
-      await order.save();
+    }
 
-      // Dispatch order confirmation email
-      const customer = await User.findById(order.customer);
-      if (customer) {
-        emailService.sendOrderConfirmation({ order, user: customer }).catch(() => {});
+    // NP-SEC-03: Handle idempotent repeated callbacks for the already-paid order
+    if (order.paymentInfo?.status === 'PAID') {
+      if (order.paymentInfo.transactionId === transactionId) {
+        return res.status(200).json({
+          success: true,
+          message: 'Payment already verified for this order.',
+          data: {
+            orderId: order._id,
+            orderNumber: order.orderNumber,
+            transactionId,
+            grandTotal: order.pricing.grandTotal,
+          },
+        });
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: 'This order has already been paid with a different transaction ID.',
+          orderId: order._id,
+          orderNumber: order.orderNumber,
+        });
       }
+    }
+
+    // NP-SEC-03: Atomic state update to prevent race conditions from concurrent callbacks
+    let updatedOrder;
+    try {
+      updatedOrder = await Order.findOneAndUpdate(
+        {
+          _id: order._id,
+          'paymentInfo.status': { $ne: 'PAID' },
+        },
+        {
+          $set: {
+            'paymentInfo.status': 'PAID',
+            'paymentInfo.transactionId': transactionId,
+            'paymentInfo.transactionUuid': transactionUuid,
+            'paymentInfo.paidAt': new Date(),
+            orderStatus: 'CONFIRMED',
+          },
+          $push: {
+            orderTimeline: {
+              status: 'CONFIRMED',
+              note: `Payment verified via eSewa (Ref: ${transactionId})`,
+              updatedAt: new Date(),
+            },
+          },
+        },
+        { new: true }
+      );
+    } catch (dbErr) {
+      if (dbErr.code === 11000) {
+        return res.status(400).json({
+          success: false,
+          message: `Duplicate transaction ID detected: ${transactionId}. This payment was already recorded.`,
+          orderId: order._id,
+          orderNumber: order.orderNumber,
+        });
+      }
+      throw dbErr;
+    }
+
+    if (!updatedOrder) {
+      // Another concurrent callback updated the order simultaneously
+      const freshOrder = await Order.findById(order._id);
+      if (freshOrder && freshOrder.paymentInfo?.transactionId === transactionId) {
+        return res.status(200).json({
+          success: true,
+          message: 'Payment already verified for this order.',
+          data: {
+            orderId: freshOrder._id,
+            orderNumber: freshOrder.orderNumber,
+            transactionId,
+            grandTotal: freshOrder.pricing.grandTotal,
+          },
+        });
+      }
+      return res.status(400).json({
+        success: false,
+        message: 'Order status conflict: payment could not be processed.',
+      });
+    }
+
+    // Dispatch order confirmation email
+    const customer = await User.findById(updatedOrder.customer);
+    if (customer) {
+      emailService.sendOrderConfirmation({ order: updatedOrder, user: customer }).catch(() => {});
     }
 
     res.status(200).json({
       success: true,
       message: 'Payment verified and order confirmed successfully!',
       data: {
-        orderId: order._id,
-        orderNumber: order.orderNumber,
+        orderId: updatedOrder._id,
+        orderNumber: updatedOrder.orderNumber,
         transactionId,
-        grandTotal: order.pricing.grandTotal,
+        grandTotal: updatedOrder.pricing.grandTotal,
       },
     });
   } catch (error) {

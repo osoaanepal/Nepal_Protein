@@ -59,7 +59,8 @@ export const OrderDetailPage = () => {
     );
   }
 
-  const isCancellable = ['PENDING', 'CONFIRMED'].includes(order.orderStatus);
+  // NP-SEC-05: Only allow direct customer cancellation for unpaid pending orders
+  const isCancellable = order.orderStatus === 'PENDING' && order.paymentInfo?.status !== 'PAID';
 
   return (
     <div className="p-6 sm:p-8 bg-slate-50 border border-slate-200 rounded-3xl space-y-8 shadow-sm">

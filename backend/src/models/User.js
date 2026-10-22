@@ -60,22 +60,41 @@ const userSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true,
+  },
+  // NP-SEC-14: Track password change timestamp for session revocation
+  passwordChangedAt: {
+    type: Date,
+    default: null,
   }
 }, {
   timestamps: true
 });
 
-// Hash password before saving if modified
+// Hash password before saving if modified & update passwordChangedAt
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
+
+  // NP-SEC-14: Update passwordChangedAt timestamp on password change (exclude initial user creation)
+  if (!this.isNew) {
+    this.passwordChangedAt = new Date(Date.now() - 1000);
+  }
   next();
 });
 
 // Match password helper
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
+};
+
+// NP-SEC-14: Check if password was changed after token issuance
+userSchema.methods.changedPasswordAfter = function (jwtTimestamp) {
+  if (this.passwordChangedAt && jwtTimestamp) {
+    const changedTimestamp = Math.floor(this.passwordChangedAt.getTime() / 1000);
+    return jwtTimestamp < changedTimestamp;
+  }
+  return false;
 };
 
 export const User = mongoose.model('User', userSchema);

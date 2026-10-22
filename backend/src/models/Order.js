@@ -89,4 +89,13 @@ const orderSchema = new mongoose.Schema({
   timestamps: true,
 });
 
+// NP-SEC-03: Ensure transactionId uniqueness for non-empty payment transactions
+orderSchema.index(
+  { 'paymentInfo.transactionId': 1 },
+  {
+    unique: true,
+    partialFilterExpression: { 'paymentInfo.transactionId': { $type: 'string', $gt: '' } },
+  }
+);
+
 export const Order = mongoose.model('Order', orderSchema);

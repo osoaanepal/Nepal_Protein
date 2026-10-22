@@ -241,7 +241,7 @@ export const RichContentEditor = ({ value, onChange, placeholder = 'Write your a
           ref={editorRef}
           contentEditable
           onInput={handleInput}
-          dangerouslySetInnerHTML={{ __html: value || '' }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(value || '') }}
           className="p-4 sm:p-6 min-h-[320px] max-h-[600px] overflow-y-auto text-slate-100 text-sm focus:outline-none leading-relaxed prose prose-invert max-w-none"
           placeholder={placeholder}
         />

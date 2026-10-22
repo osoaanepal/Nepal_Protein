@@ -18,16 +18,21 @@ const api = axios.create({
   withCredentials: true, // Send httpOnly cookies automatically
   headers: {
     'Content-Type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest', // CSRF defense: forces preflight on cross-origin requests
   },
 });
 
-// Request interceptor: attach token from localStorage if available (fallback to cookies)
+// Purge any legacy localStorage token to ensure session is strictly managed by httpOnly cookies
+try {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    window.localStorage.removeItem('osoaa_token');
+  }
+} catch {}
+
+// Request interceptor: ensure credentials and security headers
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('osoaa_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+    config.withCredentials = true;
     return config;
   },
   (error) => Promise.reject(error)

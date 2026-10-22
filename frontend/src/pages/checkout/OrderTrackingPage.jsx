@@ -161,7 +161,7 @@ export const OrderTrackingPage = () => {
             <MapPin className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
             <div>
               <span className="font-bold text-slate-900 block">Delivery Destination:</span>
-              <p>{order.shippingAddress.fullName} — {order.shippingAddress.streetAddress}, Ward {order.shippingAddress.ward}, {order.shippingAddress.municipality}, {order.shippingAddress.district}, {order.shippingAddress.province}</p>
+              <p>{order.shippingAddress.fullName} — Ward {order.shippingAddress.ward}, {order.shippingAddress.municipality}, {order.shippingAddress.district}, {order.shippingAddress.province}</p>
             </div>
           </div>
 

@@ -6,11 +6,13 @@ import {
   updateCoupon,
   deleteCoupon,
 } from '../controllers/coupon.controller.js';
-import { protect, adminOnly } from '../middleware/auth.middleware.js';
+import { protect, adminOnly, optionalAuth } from '../middleware/auth.middleware.js';
+import { couponRateLimiter } from '../middleware/rateLimiter.middleware.js';
 
 const router = express.Router();
 
-router.post('/validate', validateCoupon);
+// NP-SEC-11: Dedicated rate limiter and optional authentication for coupon validation
+router.post('/validate', couponRateLimiter, optionalAuth, validateCoupon);
 
 // Admin Coupon Routes
 router.get('/', protect, adminOnly, getCoupons);

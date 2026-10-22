@@ -2,6 +2,7 @@ import slugify from 'slugify';
 import { Brand } from '../models/Brand.js';
 import { Product } from '../models/Product.js';
 import { cloudinaryService } from './cloudinary.service.js';
+import { escapeRegex } from '../utils/security.js';
 
 export const brandService = {
   /**
@@ -28,7 +29,7 @@ export const brandService = {
     }
 
     if (search && search.trim()) {
-      const term = search.trim();
+      const term = escapeRegex(search.trim());
       query.$or = [
         { name: { $regex: term, $options: 'i' } },
         { description: { $regex: term, $options: 'i' } },
@@ -110,7 +111,7 @@ export const brandService = {
 
     // Check duplicate name (case-insensitive)
     const existingName = await Brand.findOne({
-      name: { $regex: new RegExp(`^${trimmedName}$`, 'i') },
+      name: { $regex: new RegExp(`^${escapeRegex(trimmedName)}$`, 'i') },
     });
     if (existingName) {
       const err = new Error(`A brand with the name "${trimmedName}" already exists`);
@@ -170,7 +171,7 @@ export const brandService = {
       const trimmedName = updateData.name.trim();
       const existingName = await Brand.findOne({
         _id: { $ne: id },
-        name: { $regex: new RegExp(`^${trimmedName}$`, 'i') },
+        name: { $regex: new RegExp(`^${escapeRegex(trimmedName)}$`, 'i') },
       });
       if (existingName) {
         const err = new Error(`Another brand with the name "${trimmedName}" already exists`);

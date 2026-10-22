@@ -17,8 +17,9 @@ export const paymentService = {
 
   /**
    * Prepare eSewa payment form data payload for frontend
+   * NP-SEC-09: Strictly use trusted server-side configuration (ENV.CLIENT_URL)
    */
-  createEsewaPaymentPayload: async ({ order, clientCallbackUrl }) => {
+  createEsewaPaymentPayload: async ({ order }) => {
     const totalAmount = Number(order.pricing.grandTotal);
     const couponDiscount = Number(order.pricing.couponDiscount || 0);
     const deliveryFee = Number(order.pricing.deliveryFee || 0);
@@ -56,7 +57,8 @@ export const paymentService = {
       secretKey: ENV.ESEWA.SECRET_KEY,
     });
 
-    const clientBase = clientCallbackUrl || ENV.CLIENT_URL;
+    // NP-SEC-09: Trusted server-side configuration only, sanitized of trailing slashes
+    const clientBase = (ENV.CLIENT_URL || 'http://localhost:5173').replace(/\/+$/, '');
     const successUrl = `${clientBase}/checkout/payment/esewa-callback`;
     const failureUrl = `${clientBase}/checkout/payment/esewa-callback?failed=true&orderId=${order._id}&orderNumber=${order.orderNumber}`;
 
@@ -80,6 +82,7 @@ export const paymentService = {
 
   /**
    * Server-side eSewa transaction status check and signature verification
+   * NP-SEC-03: Timing-safe HMAC verification and strict server status verification
    */
   verifyEsewaTransaction: async ({ encodedResponseData }) => {
     try {
@@ -91,16 +94,31 @@ export const paymentService = {
       }
 
       // Decode Base64 data returned in eSewa callback
-      const decodedBuffer = Buffer.from(encodedResponseData, 'base64');
-      const decodedString = decodedBuffer.toString('utf-8');
-      let decodedJson;
+      let decodedString;
+      try {
+        const decodedBuffer = Buffer.from(encodedResponseData, 'base64');
+        decodedString = decodedBuffer.toString('utf-8');
+      } catch (decodeErr) {
+        return {
+          isVerified: false,
+          message: `Malformed base64 response data: ${decodeErr.message}`,
+        };
+      }
 
+      let decodedJson;
       try {
         decodedJson = JSON.parse(decodedString);
       } catch (parseErr) {
         return {
           isVerified: false,
-          message: `Malformed response data from eSewa: ${parseErr.message}`,
+          message: `Malformed JSON response data from eSewa: ${parseErr.message}`,
+        };
+      }
+
+      if (!decodedJson || typeof decodedJson !== 'object') {
+        return {
+          isVerified: false,
+          message: 'Invalid eSewa response payload structure.',
         };
       }
 
@@ -109,7 +127,7 @@ export const paymentService = {
         return {
           isVerified: false,
           isUnavailable: true,
-          message: decodedJson.error_message || decodedJson.message || 'eSewa payment sandbox service is currently unavailable.',
+          message: decodedJson.error_message || decodedJson.message || 'eSewa payment service is currently unavailable.',
         };
       }
 
@@ -123,6 +141,13 @@ export const paymentService = {
         signature,
       } = decodedJson;
 
+      if (!transaction_uuid || total_amount === undefined || !signature) {
+        return {
+          isVerified: false,
+          message: 'Missing required eSewa transaction verification fields.',
+        };
+      }
+
       if (status !== 'COMPLETE') {
         return {
           isVerified: false,
@@ -135,7 +160,23 @@ export const paymentService = {
         ? Number(total_amount.replace(/,/g, ''))
         : Number(total_amount);
 
-      // 1. Verify HMAC-SHA256 signature integrity
+      if (isNaN(cleanTotalAmount) || cleanTotalAmount <= 0) {
+        return {
+          isVerified: false,
+          message: 'Invalid total amount in eSewa response.',
+        };
+      }
+
+      // Helper for timing-safe signature comparison
+      const safeCompare = (a, b) => {
+        if (typeof a !== 'string' || typeof b !== 'string') return false;
+        const bufA = Buffer.from(a, 'utf8');
+        const bufB = Buffer.from(b, 'utf8');
+        if (bufA.length !== bufB.length) return false;
+        return crypto.timingSafeEqual(bufA, bufB);
+      };
+
+      // 1. Verify HMAC-SHA256 signature integrity with timing-safe comparison
       let isSignatureValid = false;
       const secretKey = ENV.ESEWA.SECRET_KEY;
 
@@ -144,7 +185,8 @@ export const paymentService = {
         const message = fieldNames.map((field) => `${field}=${decodedJson[field] !== undefined ? decodedJson[field] : ''}`).join(',');
         const hmac = crypto.createHmac('sha256', secretKey);
         hmac.update(message);
-        if (hmac.digest('base64') === signature) {
+        const calculatedSignature = hmac.digest('base64');
+        if (safeCompare(calculatedSignature, signature)) {
           isSignatureValid = true;
         }
       }
@@ -159,14 +201,23 @@ export const paymentService = {
         for (const msg of fallbackMessages) {
           const hmacFallback = crypto.createHmac('sha256', secretKey);
           hmacFallback.update(msg);
-          if (hmacFallback.digest('base64') === signature) {
+          const calculatedFallback = hmacFallback.digest('base64');
+          if (safeCompare(calculatedFallback, signature)) {
             isSignatureValid = true;
             break;
           }
         }
       }
 
+      if (!isSignatureValid) {
+        return {
+          isVerified: false,
+          message: 'HMAC signature verification failed: signature does not match authentic secret key.',
+        };
+      }
+
       // 2. Query documented eSewa server-to-server transaction status endpoint
+      // NP-SEC-03: Never mark paid solely from client-supplied response when server verification is available
       let serverStatusVerified = false;
       let confirmedRefId = transaction_code || null;
 
@@ -192,7 +243,7 @@ export const paymentService = {
               if (apiRes.status === 'COMPLETE' || apiRes.status === 'SUCCESS') {
                 serverStatusVerified = true;
                 confirmedRefId = apiRes.ref_id || apiRes.refId || confirmedRefId;
-              } else if (apiRes.status && ['PENDING', 'CANCELED', 'NOT_FOUND', 'AMBIGUOUS', 'FULL_REFUND', 'PARTIAL_REFUND'].includes(apiRes.status)) {
+              } else {
                 return {
                   isVerified: false,
                   status: apiRes.status,
@@ -200,18 +251,26 @@ export const paymentService = {
                 };
               }
             }
+          } else {
+            return {
+              isVerified: false,
+              message: `eSewa central status check returned HTTP ${response.status}.`,
+            };
           }
         } catch (apiErr) {
-          console.warn('eSewa server-to-server status check endpoint error:', apiErr.message);
+          return {
+            isVerified: false,
+            isUnavailable: true,
+            message: `eSewa server-to-server status check error: ${apiErr.message}`,
+          };
         }
-      }
 
-      // Only mark verified if either server status or signature integrity is genuinely confirmed
-      if (!isSignatureValid && !serverStatusVerified) {
-        return {
-          isVerified: false,
-          message: 'Payment verification failed: HMAC signature and server status check could not be confirmed.',
-        };
+        if (!serverStatusVerified) {
+          return {
+            isVerified: false,
+            message: 'Payment verification failed: eSewa server status could not be confirmed.',
+          };
+        }
       }
 
       return {

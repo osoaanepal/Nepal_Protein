@@ -3,6 +3,7 @@ import { paymentService } from '../services/payment.service.js';
 import { Order } from '../models/Order.js';
 import { emailService } from '../services/email.service.js';
 import { getPaginationParams, buildPaginationMetadata } from '../utils/pagination.js';
+import { maskName, maskPhone } from '../utils/security.js';
 
 export const createOrder = async (req, res, next) => {
   try {
@@ -22,7 +23,6 @@ export const createOrder = async (req, res, next) => {
     if (paymentMethod === 'ESEWA') {
       paymentPayload = await paymentService.createEsewaPaymentPayload({
         order,
-        clientCallbackUrl: req.headers.origin,
       });
     } else if (paymentMethod === 'COD') {
       // Send confirmation email asynchronously
@@ -112,7 +112,32 @@ export const trackOrderByNumber = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'No matching order found with the provided details.' });
     }
 
-    res.status(200).json({ success: true, data: order });
+    // NP-SEC-12: Mask sensitive customer PII in public tracking payload
+    const maskedTrackingData = {
+      _id: order._id,
+      orderNumber: order.orderNumber,
+      orderStatus: order.orderStatus,
+      orderTimeline: order.orderTimeline,
+      createdAt: order.createdAt,
+      pricing: {
+        grandTotal: order.pricing?.grandTotal,
+      },
+      paymentInfo: {
+        method: order.paymentInfo?.method,
+        status: order.paymentInfo?.status,
+      },
+      shippingAddress: {
+        fullName: maskName(order.shippingAddress?.fullName),
+        phone: maskPhone(order.shippingAddress?.phone),
+        streetAddress: '*** Protected for Privacy ***',
+        ward: order.shippingAddress?.ward,
+        municipality: order.shippingAddress?.municipality,
+        district: order.shippingAddress?.district,
+        province: order.shippingAddress?.province,
+      },
+    };
+
+    res.status(200).json({ success: true, data: maskedTrackingData });
   } catch (error) {
     next(error);
   }

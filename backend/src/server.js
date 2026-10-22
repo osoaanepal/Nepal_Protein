@@ -9,6 +9,7 @@ import { ENV } from './config/env.js';
 import { connectDB } from './config/db.js';
 import { notFound, errorHandler } from './middleware/error.middleware.js';
 import { apiRateLimiter } from './middleware/rateLimiter.middleware.js';
+import { getSecurityHeaderOptions } from './config/securityHeaders.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -37,30 +38,48 @@ const app = express();
 // Trust reverse proxy (Render, Cloudflare, etc.) so express-rate-limit can accurately detect client IP
 app.set('trust proxy', 1);
 
-// Security Middlewares
-app.use(helmet({
+// Security Middlewares (NP-SEC-18: Strict CSP, CORP, COOP, Referrer Policy)
+app.use(helmet(getSecurityHeaderOptions()));
 
-  crossOriginResourcePolicy: { policy: 'cross-origin' },
-}));
-
+// NP-SEC-02: Strict CORS origin whitelist configuration
 const allowedOrigins = [
   ENV.CLIENT_URL,
-  'http://localhost:5173',
-  'http://localhost:3000',
-  'http://127.0.0.1:5173',
-];
+  ENV.SITE_URL,
+  ...(ENV.NODE_ENV !== 'production'
+    ? [
+        'http://localhost:5173',
+        'http://localhost:3000',
+        'http://127.0.0.1:5173',
+        'http://127.0.0.1:3000',
+      ]
+    : []),
+].filter(Boolean);
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps, curl, postman)
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Allow requests with no origin (like mobile apps, curl, Postman, server-to-server)
+    if (!origin) {
       return callback(null, true);
     }
-    return callback(null, true); // Permissive in dev
+
+    // Check if origin is in whitelist
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    // In non-production, permit local developer tooling on any local port
+    if (ENV.NODE_ENV !== 'production') {
+      if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+        return callback(null, true);
+      }
+    }
+
+    // Reject all unlisted origins safely (omit Access-Control-Allow-Origin header)
+    return callback(null, false);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
 }));
 
 // Request Parsers

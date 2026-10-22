@@ -1,5 +1,6 @@
 import { Order } from '../models/Order.js';
 import { Product } from '../models/Product.js';
+import { Coupon } from '../models/Coupon.js';
 import { BusinessSettings } from '../models/BusinessSettings.js';
 import { inventoryService } from './inventory.service.js';
 import { couponService } from './coupon.service.js';
@@ -151,71 +152,131 @@ export const orderService = {
     const grandTotal = discountedSubtotal + deliveryFee;
     const orderNumber = orderService.generateOrderNumber();
 
-    // 5. Reserve Inventory
+    // 5. NP-SEC-04: Atomically Reserve Inventory
     await inventoryService.reserveStock(validatedItems);
 
-    // 6. Record Coupon usage
+    // 6. NP-SEC-16: Record Coupon usage atomically with compensating rollback if failed
+    let recordedCoupon = false;
     if (couponDocId) {
-      await couponService.recordUsage(couponDocId, userId);
+      try {
+        await couponService.recordUsage(couponDocId, userId);
+        recordedCoupon = true;
+      } catch (couponErr) {
+        await inventoryService.releaseStock(validatedItems);
+        throw couponErr;
+      }
     }
 
-    // 7. Create Order in Database
-    const order = await Order.create({
-      orderNumber,
-      customer: userId,
-      items: validatedItems,
-      pricing: {
-        itemsSubtotal,
-        couponDiscount,
-        deliveryFee,
-        grandTotal,
-      },
-      couponApplied,
-      shippingAddress,
-      paymentInfo: {
-        method: paymentMethod,
-        status: 'PENDING',
-        transactionId: '',
-        paidAt: null,
-      },
-      orderStatus: 'PENDING',
-      orderTimeline: [{
-        status: 'PENDING',
-        note: `Order placed via ${paymentMethod}`,
-        updatedAt: new Date(),
-      }],
-      customerNote: customerNote || '',
-    });
+    // 7. Create Order in Database with compensating rollback if creation fails
+    let order;
+    try {
+      order = await Order.create({
+        orderNumber,
+        customer: userId,
+        items: validatedItems,
+        pricing: {
+          itemsSubtotal,
+          couponDiscount,
+          deliveryFee,
+          grandTotal,
+        },
+        couponApplied,
+        shippingAddress,
+        paymentInfo: {
+          method: paymentMethod,
+          status: 'PENDING',
+          transactionId: '',
+          paidAt: null,
+        },
+        orderStatus: 'PENDING',
+        orderTimeline: [{
+          status: 'PENDING',
+          note: `Order placed via ${paymentMethod}`,
+          updatedAt: new Date(),
+        }],
+        customerNote: customerNote || '',
+      });
+    } catch (orderErr) {
+      if (recordedCoupon && couponDocId) {
+        await couponService.releaseUsage(couponDocId, userId);
+      }
+      await inventoryService.releaseStock(validatedItems);
+      throw orderErr;
+    }
 
     return order;
   },
 
   /**
    * Cancel order and restore stock
+   * NP-SEC-05: Guarded atomic state transition preventing duplicate stock restorations
    */
   cancelOrder: async (orderId, userId, reason = 'Cancelled by customer') => {
-    const order = await Order.findById(orderId);
-    if (!order) throw new Error('Order not found');
+    // 1. Inspect existing order state
+    const existing = await Order.findById(orderId);
+    if (!existing) throw new Error('Order not found');
 
-    if (userId && order.customer.toString() !== userId.toString()) {
+    if (userId && existing.customer.toString() !== userId.toString()) {
       throw new Error('Not authorized to cancel this order');
     }
 
-    if (!['PENDING', 'CONFIRMED'].includes(order.orderStatus)) {
-      throw new Error(`Order cannot be cancelled because it is already in '${order.orderStatus}' state.`);
+    // Guard: Paid orders cannot be cancelled directly by customer
+    if (existing.paymentInfo?.status === 'PAID') {
+      throw new Error('Paid orders cannot be cancelled directly. Please contact customer support for cancellations and refunds.');
     }
 
-    // Restore stock
-    await inventoryService.releaseStock(order.items);
+    if (existing.orderStatus === 'CANCELLED') {
+      throw new Error('This order has already been cancelled.');
+    }
 
-    order.orderStatus = 'CANCELLED';
-    order.orderTimeline.push({
-      status: 'CANCELLED',
-      note: reason,
-      updatedAt: new Date(),
-    });
+    if (existing.orderStatus !== 'PENDING') {
+      throw new Error(`Order cannot be cancelled because it is already in '${existing.orderStatus}' state.`);
+    }
 
-    await order.save();
-    return order;
+    // 2. Perform atomic guarded transition to CANCELLED
+    const filter = {
+      _id: orderId,
+      orderStatus: 'PENDING',
+      'paymentInfo.status': { $ne: 'PAID' },
+    };
+    if (userId) {
+      filter.customer = userId;
+    }
+
+    const updatedOrder = await Order.findOneAndUpdate(
+      filter,
+      {
+        $set: { orderStatus: 'CANCELLED' },
+        $push: {
+          orderTimeline: {
+            status: 'CANCELLED',
+            note: reason,
+            updatedAt: new Date(),
+          },
+        },
+      },
+      { new: true }
+    );
+
+    if (!updatedOrder) {
+      throw new Error('Order cancellation could not be processed. The order may have already been cancelled or paid.');
+    }
+
+    // 3. Exactly once: restore inventory
+    await inventoryService.releaseStock(updatedOrder.items);
+
+    // 4. Exactly once: restore coupon usage if applied
+    if (updatedOrder.couponApplied?.code) {
+      try {
+        const coupon = await Coupon.findOne({ code: updatedOrder.couponApplied.code.toUpperCase() });
+        if (coupon) {
+          await couponService.releaseUsage(coupon._id, updatedOrder.customer);
+        }
+      } catch (couponErr) {
+        console.error('Failed to release coupon during order cancellation:', couponErr.message);
+      }
+    }
+
+    return updatedOrder;
   }
 };

@@ -43,3 +43,31 @@ export const contactRateLimiter = rateLimit({
     message: 'Too many messages sent from this IP. Please try again after 15 minutes.'
   }
 });
+
+/**
+ * NP-SEC-11: Dedicated rate limiter for coupon code validation to prevent brute-force enumeration
+ */
+export const couponRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 15, // Limit to 15 validation attempts per 15 minutes per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many coupon validation attempts from this IP. Please try again after 15 minutes.'
+  }
+});
+
+/**
+ * NP-SEC-12: Rate limiter for public order tracking to prevent enumeration attacks
+ */
+export const orderTrackRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Limit to 10 tracking requests per 15 minutes per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many order tracking attempts. Please try again after 15 minutes.'
+  }
+});

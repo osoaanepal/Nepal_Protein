@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
 import dns from 'dns';
 import slugify from 'slugify';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { ENV } from '../config/env.js';
 
 try {
@@ -14,8 +16,45 @@ import { Coupon } from '../models/Coupon.js';
 import { BusinessSettings } from '../models/BusinessSettings.js';
 import { Banner } from '../models/Banner.js';
 
-const seedDatabase = async () => {
+/**
+ * NP-SEC-19: Prevent destructive database seeding in production by default.
+ * Requires an explicit, safely validated opt-in for any destructive operation.
+ */
+export const validateSeederSafety = ({
+  nodeEnv = ENV.NODE_ENV,
+  optIn = process.env.ALLOW_DESTRUCTIVE_PRODUCTION_SEED,
+  mongoUri = ENV.MONGODB_URI,
+  args = process.argv,
+} = {}) => {
+  const isProductionMode = nodeEnv === 'production';
+  const isCloudUri = typeof mongoUri === 'string' && (
+    mongoUri.startsWith('mongodb+srv://') ||
+    (!mongoUri.includes('127.0.0.1') && !mongoUri.includes('localhost'))
+  );
+
+  if (isProductionMode || isCloudUri) {
+    const hasExplicitEnvOptIn = optIn === 'true';
+
+    // Must strictly be 'true' - reject empty, 'false', '0', 'yes', etc.
+    if (!hasExplicitEnvOptIn) {
+      const sanitizedUri = (mongoUri || '').replace(/\/\/([^:]+):([^@]+)@/, '//***:***@');
+      throw new Error(
+        `[NP-SEC-19 BLOCKED]: Destructive database seeding is prohibited in production/remote database environments.\n` +
+        `Current NODE_ENV: '${nodeEnv}', Target URI: '${sanitizedUri}'.\n` +
+        `To intentionally execute a destructive seed, you must explicitly set environment variable:\n` +
+        `ALLOW_DESTRUCTIVE_PRODUCTION_SEED=true`
+      );
+    }
+  }
+
+  return true;
+};
+
+export const seedDatabase = async () => {
   try {
+    // NP-SEC-19: Validate environment safety before connecting or deleting
+    validateSeederSafety();
+
     console.log('Connecting to database for seeding...');
     await mongoose.connect(ENV.MONGODB_URI);
     console.log('Connected to MongoDB.');
@@ -432,4 +471,11 @@ const seedDatabase = async () => {
   }
 };
 
-seedDatabase();
+const isDirectExecution = process.argv[1] && (
+  fileURLToPath(import.meta.url) === path.resolve(process.argv[1]) ||
+  process.argv[1].endsWith('seeder.js')
+);
+
+if (isDirectExecution) {
+  seedDatabase();
+}

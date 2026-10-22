@@ -7,6 +7,7 @@ import { createServer } from 'vite';
 const vite = await createServer({
   server: { middlewareMode: true },
   appType: 'custom',
+  optimizeDeps: { noDiscovery: true },
 });
 
 const { ProductShortDescription } = await vite.ssrLoadModule('./src/components/product/ProductShortDescription.jsx');

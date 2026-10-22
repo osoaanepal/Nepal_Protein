@@ -2,6 +2,7 @@ import slugify from 'slugify';
 import { BlogPost } from '../models/BlogPost.js';
 import { cloudinaryService } from './cloudinary.service.js';
 import { getPaginationParams, buildPaginationMetadata } from '../utils/pagination.js';
+import { escapeRegex } from '../utils/security.js';
 
 // Helper to calculate reading time from text/content
 const calculateReadingTime = (text = '') => {
@@ -74,7 +75,7 @@ export const blogService = {
 
     const searchTerm = search || keyword;
     if (searchTerm && searchTerm.trim()) {
-      const regex = new RegExp(searchTerm.trim(), 'i');
+      const regex = new RegExp(escapeRegex(searchTerm.trim()), 'i');
       filter.$or = [
         { title: regex },
         { excerpt: regex },
@@ -208,7 +209,7 @@ export const blogService = {
 
     const searchTerm = search || keyword;
     if (searchTerm && searchTerm.trim()) {
-      const regex = new RegExp(searchTerm.trim(), 'i');
+      const regex = new RegExp(escapeRegex(searchTerm.trim()), 'i');
       filter.$or = [
         { title: regex },
         { excerpt: regex },

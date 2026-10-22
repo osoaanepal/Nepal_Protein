@@ -10,7 +10,7 @@ import {
   toggleFeaturedPost,
 } from '../controllers/blog.controller.js';
 import { protect, adminOnly } from '../middleware/auth.middleware.js';
-import { upload } from '../middleware/upload.middleware.js';
+import { upload, validateImageFileSignatures } from '../middleware/upload.middleware.js';
 
 const router = express.Router();
 
@@ -26,6 +26,7 @@ router.post(
     { name: 'featuredImage', maxCount: 1 },
     { name: 'videoThumbnail', maxCount: 1 },
   ]),
+  validateImageFileSignatures,
   createPost
 );
 
@@ -35,6 +36,7 @@ router.put(
     { name: 'featuredImage', maxCount: 1 },
     { name: 'videoThumbnail', maxCount: 1 },
   ]),
+  validateImageFileSignatures,
   updatePost
 );
 

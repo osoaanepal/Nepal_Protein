@@ -103,22 +103,131 @@ export const getEmbedVideoUrl = (url) => {
   return null;
 };
 
-/**
- * Safe HTML Sanitizer (DOM-based)
- * Strips script, iframe (unless safe video), object, embed, event handlers, and dangerous attributes
- */
-export const sanitizeHtml = (dirtyHtml) => {
-  if (!dirtyHtml || typeof dirtyHtml !== 'string') return '';
+import DOMPurifyFactory from 'dompurify';
 
-  if (typeof window === 'undefined') {
-    // Basic server/non-DOM fallback
-    return dirtyHtml.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+/**
+ * Approved hosts for images in rich text content (Cloudinary, seed/demo CDN, own domain, local dev)
+ */
+export const APPROVED_IMAGE_HOSTS = new Set([
+  'res.cloudinary.com',
+  'images.unsplash.com',
+  'nepalprotein.com',
+  'www.nepalprotein.com',
+  'osoaa.com',
+  'www.osoaa.com',
+  'localhost',
+  '127.0.0.1',
+]);
+
+/**
+ * Validates image URL against strict protocol, host, and path security policy.
+ * Blocks data:, javascript:, vbscript:, blob:, protocol-relative (//), and unapproved hosts.
+ */
+export const isAllowedImageUrl = (src) => {
+  if (!src || typeof src !== 'string') return false;
+  const trimmed = src.trim();
+  if (!trimmed) return false;
+
+  // Reject protocol-relative URLs (e.g. '//evil.com/pic.jpg')
+  if (trimmed.startsWith('//')) {
+    return false;
   }
 
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(dirtyHtml, 'text/html');
+  // Reject dangerous schemes
+  if (/^(?:data|javascript|vbscript|blob):/i.test(trimmed)) {
+    return false;
+  }
 
-  const allowedTags = new Set([
+  // Allow relative URLs starting with a single '/'
+  if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
+    return true;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+
+    // Only allow http (local dev only) and https
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+      return false;
+    }
+
+    // In non-localhost environments, require https
+    if (parsed.protocol === 'http:' && parsed.hostname !== 'localhost' && parsed.hostname !== '127.0.0.1') {
+      return false;
+    }
+
+    const hostname = parsed.hostname.toLowerCase();
+    if (APPROVED_IMAGE_HOSTS.has(hostname) || hostname.endsWith('.cloudinary.com')) {
+      return true;
+    }
+
+    return false;
+  } catch {
+    // Malformed or unparseable URL
+    return false;
+  }
+};
+
+let purifyInstance = null;
+
+const getDOMPurify = () => {
+  if (purifyInstance) return purifyInstance;
+
+  let activeWindow = null;
+  if (typeof window !== 'undefined') {
+    activeWindow = window;
+  } else if (typeof globalThis.window !== 'undefined') {
+    activeWindow = globalThis.window;
+  }
+
+  if (!activeWindow) {
+    return null;
+  }
+
+  const purify = typeof DOMPurifyFactory.sanitize === 'function'
+    ? DOMPurifyFactory
+    : DOMPurifyFactory(activeWindow);
+
+  // Clear any existing hooks to guarantee idempotent configuration
+  purify.removeAllHooks();
+
+  // Hook to enforce link and image security policies
+  purify.addHook('afterSanitizeAttributes', (node) => {
+    // Enforce link security
+    if (node.tagName === 'A') {
+      const href = node.getAttribute('href') || '';
+      const trimmed = href.trim();
+
+      // Reject dangerous URI schemes and protocol-relative URLs
+      if (
+        trimmed.startsWith('//') ||
+        /^(?:javascript|vbscript|data|blob):/i.test(trimmed)
+      ) {
+        node.removeAttribute('href');
+      } else if (/^https?:\/\//i.test(trimmed)) {
+        node.setAttribute('target', '_blank');
+        node.setAttribute('rel', 'noopener noreferrer');
+      }
+    }
+
+    // Enforce image security and URL whitelist
+    if (node.tagName === 'IMG') {
+      const src = node.getAttribute('src') || '';
+      if (!isAllowedImageUrl(src)) {
+        // Strip unapproved, dangerous, or malformed image sources
+        node.removeAttribute('src');
+      } else {
+        node.setAttribute('loading', 'lazy');
+      }
+    }
+  });
+
+  purifyInstance = purify;
+  return purifyInstance;
+};
+
+const DOMPURIFY_CONFIG = {
+  ALLOWED_TAGS: [
     'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
     'p', 'br', 'hr',
     'strong', 'b', 'em', 'i', 'u', 's', 'strike',
@@ -127,84 +236,30 @@ export const sanitizeHtml = (dirtyHtml) => {
     'a', 'img',
     'table', 'thead', 'tbody', 'tr', 'th', 'td',
     'div', 'span', 'figure', 'figcaption',
-  ]);
+  ],
+  ALLOWED_ATTR: [
+    'href', 'title', 'target', 'rel', 'class',
+    'src', 'alt', 'width', 'height', 'loading',
+    'colspan', 'rowspan', 'scope',
+  ],
+  FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input', 'textarea', 'button', 'style', 'svg', 'math'],
+  FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur', 'style', 'id', 'name'],
+  ALLOW_DATA_ATTR: false,
+  SANITIZE_DOM: true,
+};
 
-  const allowedAttributes = {
-    a: ['href', 'title', 'target', 'rel', 'class'],
-    img: ['src', 'alt', 'title', 'width', 'height', 'class', 'loading'],
-    th: ['colspan', 'rowspan', 'class', 'scope'],
-    td: ['colspan', 'rowspan', 'class'],
-    div: ['class'],
-    span: ['class'],
-    p: ['class'],
-    h1: ['class'],
-    h2: ['class'],
-    h3: ['class'],
-    h4: ['class'],
-    ul: ['class'],
-    ol: ['class'],
-    li: ['class'],
-    blockquote: ['class'],
-    code: ['class'],
-    pre: ['class'],
-  };
+/**
+ * Safe HTML Sanitizer using DOMPurify
+ * Strips script, iframe, object, embed, forms, styles, event handlers, and dangerous attributes
+ */
+export const sanitizeHtml = (dirtyHtml) => {
+  if (!dirtyHtml || typeof dirtyHtml !== 'string') return '';
 
-  const sanitizeNode = (node) => {
-    // If element node
-    if (node.nodeType === Node.ELEMENT_NODE) {
-      const tagName = node.tagName.toLowerCase();
-
-      // If tag is not allowed, replace with its text content or unwrap
-      if (!allowedTags.has(tagName)) {
-        const textNode = doc.createTextNode(node.textContent);
-        node.parentNode?.replaceChild(textNode, node);
-        return;
-      }
-
-      // Filter attributes
-      const allowedAttrsForTag = allowedAttributes[tagName] || ['class'];
-      const attributes = Array.from(node.attributes);
-
-      for (const attr of attributes) {
-        const attrName = attr.name.toLowerCase();
-
-        // Strip inline JavaScript handlers like onclick, onload, onerror
-        if (attrName.startsWith('on') || attr.value.trim().toLowerCase().startsWith('javascript:')) {
-          node.removeAttribute(attr.name);
-          continue;
-        }
-
-        if (!allowedAttrsForTag.includes(attrName)) {
-          node.removeAttribute(attr.name);
-        }
-      }
-
-      // If link tag, enforce secure external link attributes
-      if (tagName === 'a') {
-        const href = node.getAttribute('href') || '';
-        if (href.startsWith('http://') || href.startsWith('https://')) {
-          node.setAttribute('target', '_blank');
-          node.setAttribute('rel', 'noopener noreferrer');
-        }
-      }
-
-      // If img tag, ensure lazy loading and secure URLs
-      if (tagName === 'img') {
-        node.setAttribute('loading', 'lazy');
-      }
-
-      // Recursively sanitize children
-      const children = Array.from(node.childNodes);
-      for (const child of children) {
-        sanitizeNode(child);
-      }
-    }
-  };
-
-  const bodyChildren = Array.from(doc.body.childNodes);
-  for (const child of bodyChildren) {
-    sanitizeNode(child);
+  const purify = getDOMPurify();
+  if (purify) {
+    return purify.sanitize(dirtyHtml, DOMPURIFY_CONFIG);
   }
 
-  return doc.body.innerHTML;
+  // Safe fallback for SSR / non-DOM environments: strip all HTML tags
+  return dirtyHtml.replace(/<[^>]*>/g, '');
 };

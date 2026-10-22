@@ -6,7 +6,7 @@ import {
   deleteBanner,
 } from '../controllers/banner.controller.js';
 import { protect, adminOnly } from '../middleware/auth.middleware.js';
-import { upload } from '../middleware/upload.middleware.js';
+import { upload, validateImageFileSignatures } from '../middleware/upload.middleware.js';
 
 const router = express.Router();
 
@@ -21,6 +21,7 @@ router.post(
     { name: 'desktopImage', maxCount: 1 },
     { name: 'mobileImage', maxCount: 1 },
   ]),
+  validateImageFileSignatures,
   createBanner
 );
 router.put(
@@ -31,6 +32,7 @@ router.put(
     { name: 'desktopImage', maxCount: 1 },
     { name: 'mobileImage', maxCount: 1 },
   ]),
+  validateImageFileSignatures,
   updateBanner
 );
 router.delete('/:id', protect, adminOnly, deleteBanner);

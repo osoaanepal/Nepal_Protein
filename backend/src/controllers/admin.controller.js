@@ -3,6 +3,7 @@ import { User } from '../models/User.js';
 import { Product } from '../models/Product.js';
 import { inventoryService } from '../services/inventory.service.js';
 import { getPaginationParams, buildPaginationMetadata } from '../utils/pagination.js';
+import { escapeRegex } from '../utils/security.js';
 
 export const getDashboardAnalytics = async (req, res, next) => {
   try {
@@ -99,11 +100,12 @@ export const getAdminOrders = async (req, res, next) => {
     if (status && status !== 'ALL') query.orderStatus = status;
     if (paymentStatus && paymentStatus !== 'ALL') query['paymentInfo.status'] = paymentStatus;
 
-    if (search) {
+    if (search && search.trim()) {
+      const safeSearch = escapeRegex(search.trim());
       query.$or = [
-        { orderNumber: { $regex: search, $options: 'i' } },
-        { 'shippingAddress.fullName': { $regex: search, $options: 'i' } },
-        { 'shippingAddress.phone': { $regex: search, $options: 'i' } },
+        { orderNumber: { $regex: safeSearch, $options: 'i' } },
+        { 'shippingAddress.fullName': { $regex: safeSearch, $options: 'i' } },
+        { 'shippingAddress.phone': { $regex: safeSearch, $options: 'i' } },
       ];
     }
 
@@ -184,11 +186,12 @@ export const getAdminCustomers = async (req, res, next) => {
     });
     const query = { role: 'customer' };
 
-    if (search) {
+    if (search && search.trim()) {
+      const safeSearch = escapeRegex(search.trim());
       query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
-        { phone: { $regex: search, $options: 'i' } },
+        { name: { $regex: safeSearch, $options: 'i' } },
+        { email: { $regex: safeSearch, $options: 'i' } },
+        { phone: { $regex: safeSearch, $options: 'i' } },
       ];
     }
 

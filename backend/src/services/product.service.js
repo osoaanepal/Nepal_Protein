@@ -4,6 +4,7 @@ import { Category } from '../models/Category.js';
 import { Brand } from '../models/Brand.js';
 import { cloudinaryService } from '../services/cloudinary.service.js';
 import { getPaginationParams, buildPaginationMetadata } from '../utils/pagination.js';
+import { escapeRegex } from '../utils/security.js';
 
 export const productService = {
   /**
@@ -35,11 +36,12 @@ export const productService = {
     }
 
     if (keyword) {
+      const safeKeyword = escapeRegex(keyword.trim());
       query.$or = [
-        { name: { $regex: keyword, $options: 'i' } },
-        { shortDescription: { $regex: keyword, $options: 'i' } },
-        { sku: { $regex: keyword, $options: 'i' } },
-        { tags: { $in: [new RegExp(keyword, 'i')] } },
+        { name: { $regex: safeKeyword, $options: 'i' } },
+        { shortDescription: { $regex: safeKeyword, $options: 'i' } },
+        { sku: { $regex: safeKeyword, $options: 'i' } },
+        { tags: { $in: [new RegExp(safeKeyword, 'i')] } },
       ];
     }
 

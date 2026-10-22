@@ -37,6 +37,15 @@ export const protect = async (req, res, next) => {
       });
     }
 
+    // NP-SEC-14: Invalidate token if password was changed after token issuance
+    if (user.changedPasswordAfter(decoded.iat)) {
+      return res.status(401).json({
+        success: false,
+        code: 'PASSWORD_CHANGED',
+        message: 'Password was recently changed. Please log in again.',
+      });
+    }
+
     req.user = user;
     next();
   } catch (error) {
@@ -79,4 +88,29 @@ export const requireVerified = (req, res, next) => {
     });
   }
   next();
+};
+
+/**
+ * Optional authentication: attaches req.user if a valid token/session exists,
+ * but allows unauthenticated guest requests to proceed as guests without error.
+ */
+export const optionalAuth = async (req, res, next) => {
+  try {
+    let token = req.cookies?.token;
+    if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+      token = req.headers.authorization.split(' ')[1];
+    }
+    if (!token) {
+      return next();
+    }
+    const decoded = jwt.verify(token, ENV.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+    if (user && user.isActive && !user.changedPasswordAfter(decoded.iat)) {
+      req.user = user;
+    }
+    next();
+  } catch (err) {
+    // If token is invalid or expired, continue as guest
+    next();
+  }
 };
