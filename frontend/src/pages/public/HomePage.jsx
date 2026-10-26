@@ -84,10 +84,7 @@ export const HomePage = () => {
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-16 lg:py-24 w-full">
           <div className="max-w-2xl space-y-4 sm:space-y-6 animate-in fade-in slide-in-from-bottom-6 duration-700">
 
-            {/* Top Tagline Badge */}
-            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-white/10 border border-white/20 text-orange-400 text-[11px] sm:text-xs font-bold uppercase tracking-wider backdrop-blur-md max-w-full">
-              <span className="truncate">{heroBanner?.badge || 'DFTQC TESTED QUALITY'}</span>
-            </div>
+
 
             {/* Main Headline */}
             <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.15] break-words">
