@@ -250,6 +250,16 @@ export const HomePage = () => {
             <ProductCard key={product._id} product={product} />
           ))}
         </div>
+
+        <div className="mt-6 flex justify-center sm:mt-8">
+          <Link
+            to="/shop?sortBy=popular"
+            className="group inline-flex items-center gap-2 text-sm font-bold text-orange-600 transition-colors hover:text-orange-700"
+          >
+            <span>View All Products</span>
+
+          </Link>
+        </div>
       </section>
 
       {/* 4. DFTQC QUALITY STANDARDS TRUST SECTION */}
