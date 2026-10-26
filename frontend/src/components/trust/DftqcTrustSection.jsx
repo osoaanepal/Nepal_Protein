@@ -33,10 +33,7 @@ export const DftqcTrustSection = () => {
 
           {/* Left Text & Quality Standards Description */}
           <div className="lg:col-span-7 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-gray-300 text-orange-600 text-xs font-bold uppercase tracking-wider shadow-sm">
-              <FlaskConical className="w-4 h-4" />
-              <span>Quality Assurance & Standards</span>
-            </div>
+
 
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-black tracking-tight leading-tight">
               Quality You Can Trust. <br />
@@ -91,9 +88,7 @@ export const DftqcTrustSection = () => {
                     <p className="text-xs text-slate-500">Nepal Wellness & Nutrition</p>
                   </div>
                 </div>
-                <span className="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-200">
-                  Active
-                </span>
+
               </div>
 
               <div className="space-y-4 text-xs text-slate-700">

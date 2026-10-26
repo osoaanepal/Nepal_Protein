@@ -168,10 +168,7 @@ export const BrandDetailPage = () => {
               <h1 className="text-2xl sm:text-3xl font-black text-black tracking-tight">
                 {brand.name}
               </h1>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
-                <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                <span>100% Genuine</span>
-              </span>
+
             </div>
 
             <p className="text-xs sm:text-sm text-slate-600 max-w-2xl leading-relaxed">

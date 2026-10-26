@@ -86,7 +86,6 @@ export const HomePage = () => {
 
             {/* Top Tagline Badge */}
             <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-white/10 border border-white/20 text-orange-400 text-[11px] sm:text-xs font-bold uppercase tracking-wider backdrop-blur-md max-w-full">
-              <Sparkles className="w-3.5 h-3.5 text-orange-400 shrink-0" />
               <span className="truncate">{heroBanner?.badge || 'DFTQC TESTED QUALITY'}</span>
             </div>
 
@@ -148,23 +147,14 @@ export const HomePage = () => {
 
       {/* 2. FEATURED CATEGORIES SECTION */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-end justify-between mb-8 pb-3 border-b border-slate-100">
-          <div>
-            <span className="text-xs font-bold text-orange-600 uppercase tracking-widest">
-              Browse by Category
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-black mt-1">
+        <div className="mb-6 flex items-center justify-between gap-3 border-b border-slate-200 pb-4 sm:mb-8 sm:pb-5">
+          <div className="min-w-0">
+            <h2 className="text-lg font-extrabold tracking-tight text-slate-900 sm:text-2xl md:text-3xl">
               Shop By Goal & Category
             </h2>
           </div>
 
-          <Link
-            to="/shop"
-            className="text-xs font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1"
-          >
-            <span>View All</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-5">
@@ -201,17 +191,22 @@ export const HomePage = () => {
       {/* 2.5 FEATURED BRANDS SECTION */}
       {brands.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-end justify-between mb-8 pb-3 border-b border-slate-100">
-            <div>
-              <span className="text-xs font-bold text-orange-600 uppercase tracking-widest">Genuine Multi-Brand Catalog</span>
-              <h2 className="text-2xl sm:text-3xl font-black text-black mt-1">Shop By Brand</h2>
+          <div className="mb-6 flex items-center justify-between gap-3 border-b border-slate-200 pb-4 sm:mb-8 sm:pb-5">
+            <div className="min-w-0">
+              <h2 className="text-lg font-extrabold tracking-tight text-slate-900 sm:text-2xl md:text-3xl">
+                Shop By Brand
+              </h2>
+
             </div>
-            <Link to="/brands" className="text-xs font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1">
-              <span>View All Brands</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+
+            <Link
+              to="/brands"
+              className="flex shrink-0 items-center gap-1 text-xs font-bold text-orange-600 transition-colors hover:text-orange-700 sm:text-sm"
+            >
+              <span>View All</span>
+
             </Link>
           </div>
-
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {brands.map((b) => (
               <Link
@@ -237,17 +232,19 @@ export const HomePage = () => {
 
       {/* 3. BEST SELLERS SECTION */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-end justify-between mb-8 pb-3 border-b border-slate-100">
-          <div className="space-y-1">
-            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-orange-600 uppercase tracking-widest">
-              <Flame className="w-4 h-4 fill-current" />
-              <span>Trending in Nepal</span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-black">Best Selling Supplements</h2>
+        <div className="mb-6 flex items-center justify-between gap-3 border-b border-slate-200 pb-4 sm:mb-8 sm:pb-5">
+          <div className="min-w-0">
+            <h2 className="text-lg font-extrabold tracking-tight text-slate-900 sm:text-2xl md:text-3xl">
+              Best Selling Supplements
+            </h2>
           </div>
-          <Link to="/shop?sortBy=popular" className="text-xs font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1">
+
+          <Link
+            to="/shop?sortBy=popular"
+            className="flex shrink-0 items-center gap-1 text-xs font-bold text-orange-600 transition-colors hover:text-orange-700 sm:text-sm"
+          >
             <span>Explore All</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+
           </Link>
         </div>
 
@@ -263,18 +260,12 @@ export const HomePage = () => {
 
       {/* 5. FEATURED / NEW ARRIVALS */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-end justify-between mb-8 pb-3 border-b border-slate-100">
-          <div className="space-y-1">
-            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-orange-600 uppercase tracking-widest">
-              <Sparkles className="w-4 h-4" />
-              <span>Handpicked Formulations</span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-black">Featured Performance Products</h2>
+        <div className="mb-6 flex items-center justify-between gap-3 border-b border-slate-200 pb-4 sm:mb-8 sm:pb-5">
+          <div className="min-w-0">
+            <h2 className="text-lg font-extrabold tracking-tight text-slate-900 sm:text-2xl md:text-3xl">
+              Featured Performance Products
+            </h2>
           </div>
-          <Link to="/shop" className="text-xs font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1">
-            <span>View Catalog</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -288,7 +279,6 @@ export const HomePage = () => {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="p-8 sm:p-12 rounded-3xl bg-slate-50 border border-slate-200 space-y-10">
           <div className="text-center max-w-2xl mx-auto space-y-3">
-            <span className="text-xs font-bold text-orange-600 uppercase tracking-widest">The Nepal Protein Standard</span>
             <h2 className="text-2xl sm:text-3xl font-black text-black">Why Athletes & Fitness Enthusiasts Choose Nepal Protein</h2>
             <p className="text-xs sm:text-sm text-slate-600">
               We eliminate counterfeit risks with multi-brand direct sourcing, certified manufacturer partnerships, and transparent nutritional profiles.

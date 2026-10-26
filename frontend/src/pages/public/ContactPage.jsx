@@ -153,10 +153,7 @@ export const ContactPage = () => {
       {/* Header Banner */}
       <section className="bg-gradient-to-b from-slate-50 to-white border-b border-slate-200/80 py-12 sm:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-3">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 border border-orange-200 text-orange-600 text-xs font-bold tracking-wider uppercase">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Dedicated Customer Support</span>
-          </div>
+
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-black tracking-tight">
             Contact Nepal Protein
           </h1>
@@ -175,7 +172,6 @@ export const ContactPage = () => {
             <div className="p-6 sm:p-8 rounded-3xl bg-slate-50 border border-slate-200 shadow-sm space-y-6">
               <div className="space-y-1">
                 <h2 className="text-lg font-black text-black flex items-center gap-2">
-                  <MessageSquare className="w-5 h-5 text-orange-500" />
                   <span>Get In Touch</span>
                 </h2>
                 <p className="text-xs text-slate-500">
@@ -508,7 +504,7 @@ export const ContactPage = () => {
                         </>
                       ) : (
                         <>
-                          <Send className="w-4 h-4" />
+
                           <span>Submit Message</span>
                         </>
                       )}
@@ -516,7 +512,7 @@ export const ContactPage = () => {
                   </div>
 
                   <p className="text-[11px] text-slate-400 text-center pt-1">
-                    🔒 Your contact details are securely protected and strictly used for inquiry resolution.
+                    Your contact details are securely protected and strictly used for inquiry resolution.
                   </p>
 
                 </form>

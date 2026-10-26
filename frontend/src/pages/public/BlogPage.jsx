@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { 
-  Search, 
-  BookOpen, 
-  ChevronLeft, 
-  ChevronRight, 
-  Filter, 
-  Sparkles, 
-  Flame, 
+import {
+  Search,
+  BookOpen,
+  ChevronLeft,
+  ChevronRight,
+  Filter,
+  Sparkles,
+  Flame,
   RotateCcw,
   ChefHat,
   HeartPulse,
@@ -142,17 +142,14 @@ export const BlogPage = () => {
         noindex={Boolean(currentKeyword)}
         breadcrumbs={breadcrumbs}
       />
-      
+
       {/* Hero Header */}
       <section className="bg-[#E5E7EB] text-black pt-14 pb-16 relative overflow-hidden">
         {/* Subtle decorative background element */}
         <div className="absolute inset-0 bg-[radial-gradient(#F97316_1px,transparent_1px)] [background-size:24px_24px] opacity-10" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-gray-300 text-orange-600 text-xs font-bold uppercase tracking-wider mb-4 shadow-sm">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>OSOAA Wellness & Nutrition Hub</span>
-            </div>
+
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-black font-display tracking-tight text-black leading-tight">
               Science-Backed Nutrition, Fitness & Healthy Recipes
             </h1>
@@ -185,7 +182,7 @@ export const BlogPage = () => {
 
       {/* Main Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-20">
-        
+
         {/* Category Navigation Pills */}
         <div className="bg-white rounded-2xl p-2 sm:p-3 shadow-md border border-slate-200 flex items-center gap-2 overflow-x-auto scrollbar-none">
           {BLOG_CATEGORIES.map((cat) => {
@@ -194,11 +191,10 @@ export const BlogPage = () => {
               <button
                 key={cat.id}
                 onClick={() => handleCategoryChange(cat.slug)}
-                className={`px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
-                  isActive
+                className={`px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${isActive
                     ? 'bg-black text-white shadow-md'
                     : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                }`}
+                  }`}
               >
                 {cat.slug === 'recipes' && <ChefHat className={`w-4 h-4 ${isActive ? 'text-orange-400' : 'text-orange-500'}`} />}
                 {cat.slug === 'nepali-blog' && <BookOpen className={`w-4 h-4 ${isActive ? 'text-orange-400' : 'text-black'}`} />}
@@ -243,13 +239,13 @@ export const BlogPage = () => {
         <div className="pt-10 space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-xl sm:text-2xl font-bold font-display text-black">
-              {currentCategory === 'recipes' 
-                ? 'All Healthy Recipes' 
-                : currentCategory === 'nepali-blog' 
-                ? 'नेपाली स्वास्थ्य तथा पोषण लेखहरू' 
-                : currentCategory === 'english-blog' 
-                ? 'Nutrition & Fitness Articles' 
-                : 'Latest Articles & Recipes'}
+              {currentCategory === 'recipes'
+                ? 'All Healthy Recipes'
+                : currentCategory === 'nepali-blog'
+                  ? 'नेपाली स्वास्थ्य तथा पोषण लेखहरू'
+                  : currentCategory === 'english-blog'
+                    ? 'Nutrition & Fitness Articles'
+                    : 'Latest Articles & Recipes'}
             </h2>
             <p className="text-xs text-slate-500 font-medium">
               {pagination.total} {pagination.total === 1 ? 'post' : 'posts'} found

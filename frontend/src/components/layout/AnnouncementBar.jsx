@@ -21,7 +21,6 @@ export const AnnouncementBar = () => {
 
   return (
     <div className="bg-[#E5E7EB] text-black text-[11px] sm:text-xs py-1.5 sm:py-2 px-3 sm:px-4 text-center font-medium tracking-wide flex items-center justify-center gap-1.5 sm:gap-2 border-b border-gray-300 flex-wrap">
-      <Sparkles className="w-3.5 h-3.5 text-orange-500 animate-pulse shrink-0" />
       <span>{cleanText}</span>
       {link && (
         <Link to={link} className="underline font-bold text-orange-600 hover:text-orange-700 ml-0.5 sm:ml-1 transition shrink-0">

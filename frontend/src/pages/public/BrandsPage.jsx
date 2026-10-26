@@ -39,10 +39,6 @@ export const BrandsPage = () => {
 
       {/* Hero Header */}
       <div className="text-center max-w-2xl mx-auto space-y-3">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 border border-orange-200 text-orange-600 text-xs font-bold uppercase tracking-wider">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>Guaranteed Authentic Sourcing</span>
-        </div>
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-black tracking-tight">
           Browse by Brand
         </h1>
@@ -88,10 +84,7 @@ export const BrandsPage = () => {
                       </div>
                     )}
                   </div>
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
-                    <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                    <span>Verified Brand</span>
-                  </span>
+
                 </div>
 
                 <div>
@@ -111,7 +104,7 @@ export const BrandsPage = () => {
                 </span>
                 <span className="text-orange-600 group-hover:translate-x-1 transition flex items-center gap-1">
                   <span>Explore Catalog</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+
                 </span>
               </div>
             </Link>
