@@ -329,7 +329,7 @@ export const HomePage = () => {
 
       {/* Floating WhatsApp Chat Button */}
       <a
-        href={`https://wa.me/9802949872?text=${encodeURIComponent(
+        href={`https://wa.me/9779802949872?text=${encodeURIComponent(
           "Hello Nepal Protein! I would like to know more about your products."
         )}`}
         target="_blank"
