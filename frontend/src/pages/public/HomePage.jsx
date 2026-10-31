@@ -6,7 +6,8 @@ import {
   ShieldCheck,
   Zap,
   Flame,
-  Truck
+  Truck,
+  MessageCircle
 } from 'lucide-react';
 import api from '../../services/api';
 import { ProductCard } from '../../components/product/ProductCard';
@@ -326,6 +327,26 @@ export const HomePage = () => {
         </div>
       </section>
 
+      {/* Floating WhatsApp Chat Button */}
+      <a
+        href={`https://wa.me/9802949872?text=${encodeURIComponent(
+          "Hello Nepal Protein! I would like to know more about your products."
+        )}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Chat with Nepal Protein on WhatsApp"
+        className="!fixed !bottom-5 !right-5 !top-auto !left-auto z-[99999] group"
+      >
+        <span className="absolute right-16 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
+          Chat with us
+        </span>
+
+        <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-xl transition-all duration-300 hover:scale-110 hover:bg-[#20BA5A]">
+          <MessageCircle size={29} strokeWidth={2.5} />
+
+          <span className="absolute right-0 top-0 h-3.5 w-3.5 rounded-full border-2 border-white bg-red-500" />
+        </div>
+      </a>
     </div>
   );
 };

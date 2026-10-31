@@ -90,17 +90,7 @@ export const Footer = () => {
             <p className="text-xs text-gray-800 leading-relaxed max-w-sm">
               Nepal's trusted sports nutrition &amp; fitness supplements store. Delivering ultra-pure whey protein, micronized creatine, pre-workout, and fitness supplements from authentic brands including OSOAA with fast nationwide delivery.
             </p>
-            <div className="flex items-center gap-3 pt-2">
-              <a href={settings?.socialLinks?.facebook || 'https://facebook.com'} target="_blank" rel="noreferrer" className="p-2.5 rounded-xl bg-gray-300 hover:bg-orange-500 text-black hover:text-white transition" aria-label="Facebook">
-                <Facebook className="w-4 h-4" />
-              </a>
-              <a href={settings?.socialLinks?.instagram || 'https://instagram.com'} target="_blank" rel="noreferrer" className="p-2.5 rounded-xl bg-gray-300 hover:bg-orange-500 text-black hover:text-white transition" aria-label="Instagram">
-                <Instagram className="w-4 h-4" />
-              </a>
-              <a href={settings?.socialLinks?.youtube || 'https://youtube.com'} target="_blank" rel="noreferrer" className="p-2.5 rounded-xl bg-gray-300 hover:bg-orange-500 text-black hover:text-white transition" aria-label="YouTube">
-                <Youtube className="w-4 h-4" />
-              </a>
-            </div>
+
           </div>
 
           {/* Quick Categories */}
@@ -189,7 +179,7 @@ export const Footer = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
             {/* Registered Business */}
-            <div className="min-w-0 flex items-start gap-3 p-4 rounded-xl bg-white border border-gray-300 shadow-sm hover:border-orange-400 transition-colors">
+            <div className="min-w-0 flex items-start gap-3 p-4 rounded-xl bg-white border border-gray-300 shadow-sm transition-colors">
               <div className="shrink-0 flex items-center justify-center w-10 h-10 rounded-lg bg-orange-50 text-orange-600">
                 <Building2 className="w-5 h-5" />
               </div>
@@ -205,7 +195,7 @@ export const Footer = () => {
             </div>
 
             {/* Public-Facing Brand */}
-            <div className="min-w-0 flex items-start gap-3 p-4 rounded-xl bg-white border border-gray-300 shadow-sm hover:border-orange-400 transition-colors">
+            <div className="min-w-0 flex items-start gap-3 p-4 rounded-xl bg-white border border-gray-300 shadow-sm transition-colors">
               <div className="shrink-0 flex items-center justify-center w-10 h-10 rounded-lg bg-orange-50 text-orange-600">
                 <Globe className="w-5 h-5" />
               </div>
@@ -221,7 +211,7 @@ export const Footer = () => {
             </div>
 
             {/* Distribution Network */}
-            <div className="min-w-0 flex items-start gap-3 p-4 rounded-xl bg-white border border-gray-300 shadow-sm hover:border-orange-400 transition-colors sm:col-span-2 lg:col-span-1">
+            <div className="min-w-0 flex items-start gap-3 p-4 rounded-xl bg-white border border-gray-300 shadow-sm transition-colors sm:col-span-2 lg:col-span-1">
               <div className="shrink-0 flex items-center justify-center w-10 h-10 rounded-lg bg-orange-50 text-orange-600">
                 <PackageCheck className="w-5 h-5" />
               </div>
