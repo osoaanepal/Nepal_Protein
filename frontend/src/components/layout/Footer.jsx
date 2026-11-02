@@ -8,9 +8,6 @@ import {
   Truck,
   RefreshCw,
   Lock,
-  Facebook,
-  Instagram,
-  Youtube,
   Building2,
   Globe,
   PackageCheck
@@ -101,8 +98,8 @@ export const Footer = () => {
               <li><Link to="/shop?category=creatine" className="text-gray-700 hover:text-orange-600 transition">Creatine Monohydrate</Link></li>
               <li><Link to="/shop?category=pre-workout" className="text-gray-700 hover:text-orange-600 transition">Pre-Workout</Link></li>
               <li><Link to="/shop?category=mass-gainer" className="text-gray-700 hover:text-orange-600 transition">Mass Gainer</Link></li>
-              <li><Link to="/shop?category=amino-acids-bcaa" className="text-gray-700 hover:text-orange-600 transition">Amino Acids & BCAA</Link></li>
-              <li><Link to="/shop?category=gym-accessories-shakers" className="text-gray-700 hover:text-orange-600 transition">Gym Accessories</Link></li>
+              <li><Link to="/shop?category=milk-powder" className="text-gray-700 hover:text-orange-600 transition">Milk Powder</Link></li>
+              <li><Link to="/shop?category=vitamins-minerals-and-supplements" className="text-gray-700 hover:text-orange-600 transition">Vitamins, Minerals & Supplements</Link></li>
             </ul>
           </div>
 
@@ -186,7 +183,7 @@ export const Footer = () => {
 
               <div className="min-w-0">
                 <h4 className="text-sm font-bold text-black leading-snug">
-                  Arushi International
+                  Aayushi International
                 </h4>
                 <p className="mt-1 text-xs text-gray-700 leading-relaxed">
                   Registered business · PAN/VAT

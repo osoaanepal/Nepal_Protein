@@ -20,6 +20,7 @@ import { useAuthStore } from '../../store/authStore';
 import { ProductCard } from '../../components/product/ProductCard';
 import { ProductDescription } from '../../components/product/ProductDescription';
 import { ProductShortDescription } from '../../components/product/ProductShortDescription';
+import CopyProductLink from "../../components/product/CopyProductLink";
 import { SEO } from '../../components/seo/SEO';
 import { buildProductSchema } from '../../utils/seoSchemas';
 import { formatShortDescriptionForSeo } from '../../utils/shortDescriptionParser';
@@ -239,6 +240,7 @@ export const ProductDetailPage = () => {
             )}
           </div>
 
+
           {/* Thumbnail Strip */}
           {product.images?.length > 1 && (
             <div className="flex gap-3 overflow-x-auto pb-2">
@@ -274,7 +276,7 @@ export const ProductDetailPage = () => {
               <span className="text-slate-400 font-mono text-[11px] shrink-0">SKU: {selectedVariant?.sku || product.sku}</span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-black text-black leading-tight">
+            <h1 className="text-lg sm:text-2xl md:text-3xl font-black text-black leading-tight break-words">
               {product.name}
             </h1>
 
@@ -298,18 +300,22 @@ export const ProductDetailPage = () => {
           </div>
 
           {/* Pricing in NPR */}
-          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-baseline gap-3">
-            <span className="text-3xl font-black text-black">
+          <div className="p-3 sm:p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-wrap items-center gap-x-3 gap-y-1">
+
+            <span className="text-xl sm:text-2xl md:text-3xl font-black text-black">
               {formatNpr(currentPrice)}
             </span>
+
             {currentCompareAtPrice > currentPrice && (
-              <span className="text-sm text-slate-400 line-through">
+              <span className="text-xs sm:text-sm text-slate-400 line-through">
                 {formatNpr(currentCompareAtPrice)}
               </span>
             )}
-            <span className="text-xs text-slate-500 ml-auto">
-              (Inclusive of all taxes in Nepal)
+
+            <span className="w-full sm:w-auto sm:ml-auto text-[10px] sm:text-xs text-slate-500">
+              Inclusive of all taxes in Nepal
             </span>
+
           </div>
 
           {/* Short Description */}
@@ -333,8 +339,8 @@ export const ProductDetailPage = () => {
                     key={v._id}
                     onClick={() => setSelectedVariant(v)}
                     className={`px-4 py-2.5 rounded-xl text-xs font-bold border transition ${selectedVariant?._id === v._id
-                        ? 'bg-black border-black text-white shadow-sm'
-                        : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
+                      ? 'bg-black border-black text-white shadow-sm'
+                      : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
                       }`}
                   >
                     {v.variantName}
@@ -409,6 +415,9 @@ export const ProductDetailPage = () => {
             </button>
           </div>
 
+          {/* Copy product link */}
+          <CopyProductLink product={product} />
+
           {/* Trust Guarantees */}
           <div className="grid grid-cols-3 gap-3 pt-6 border-t border-slate-200 text-center text-[11px] text-slate-600">
             <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
@@ -439,8 +448,8 @@ export const ProductDetailPage = () => {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`pb-4 text-sm font-bold uppercase tracking-wider border-b-2 transition whitespace-nowrap ${activeTab === tab
-                  ? 'border-orange-500 text-orange-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-800'
+                ? 'border-orange-500 text-orange-600'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
                 }`}
             >
               {tab === 'description' && 'Product Details'}
@@ -661,6 +670,7 @@ export const ProductDetailPage = () => {
           </div>
         </div>
       )}
+
 
     </div>
   );

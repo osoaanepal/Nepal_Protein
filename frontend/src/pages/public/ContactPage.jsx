@@ -254,47 +254,7 @@ export const ContactPage = () => {
                 </div>
               )}
 
-              {/* Social Channels if configured */}
-              {(socialData.facebook || socialData.instagram || socialData.youtube) && (
-                <div className="pt-4 border-t border-slate-200">
-                  <span className="text-xs font-bold text-black block mb-2.5">Official Social Channels</span>
-                  <div className="flex items-center gap-2">
-                    {socialData.facebook && (
-                      <a
-                        href={socialData.facebook}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-orange-500 hover:text-white hover:border-orange-500 transition shadow-sm"
-                        aria-label="Visit OSOAA Facebook page"
-                      >
-                        <Facebook className="w-4 h-4" />
-                      </a>
-                    )}
-                    {socialData.instagram && (
-                      <a
-                        href={socialData.instagram}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-orange-500 hover:text-white hover:border-orange-500 transition shadow-sm"
-                        aria-label="Visit OSOAA Instagram profile"
-                      >
-                        <Instagram className="w-4 h-4" />
-                      </a>
-                    )}
-                    {socialData.youtube && (
-                      <a
-                        href={socialData.youtube}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-orange-500 hover:text-white hover:border-orange-500 transition shadow-sm"
-                        aria-label="Visit OSOAA YouTube channel"
-                      >
-                        <Youtube className="w-4 h-4" />
-                      </a>
-                    )}
-                  </div>
-                </div>
-              )}
+
 
               {/* Business Assurance Note */}
               <div className="p-4 rounded-2xl bg-[#E5E7EB] text-black border border-gray-300 space-y-2">
